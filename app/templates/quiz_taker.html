@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; padding-top: 2rem;">
+    <!-- Header -->
+    <div style="margin-bottom: 2rem; display: flex; gap: 1rem;">
+        <!-- <a href="{{ url_for('main.student_quizzes') }}"
+            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to My Quizzes</a>
+        <span style="color: var(--text-secondary);">|</span> -->
+        <a href="{{ url_for('main.lesson_player', lesson_id=lesson.id) }}"
+            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to Lesson</a>
+    </div>
+
+    <div class="glass-card">
+        <div style="border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+            <h1 style="margin-top: 0;">{{ quiz.title }}</h1>
+            <p style="color: var(--text-secondary);">Test your knowledge for: <strong>{{ lesson.title }}</strong></p>
+        </div>
+
+        <form action="{{ url_for('main.submit_quiz', lesson_id=lesson.id) }}" method="POST">
+            {% for q in questions %}
+            <div style="margin-bottom: 3rem; animation: fadeIn 0.5s ease-out;">
+                <h4 style="margin-bottom: 1.25rem; color: var(--text-primary); font-size: 1.2rem; font-weight: 600;">{{
+                    loop.index }}. {{ q.text }}</h4>
+                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    {% for option in q.options %}
+                    <label class="quiz-option-card">
+                        <input type="radio" name="question_{{ q.id }}" value="{{ loop.index0 }}" required>
+                        <div class="custom-radio"></div>
+                        <span class="option-text">{{ option }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <div style="margin-top: 3rem; text-align: right;">
+                <button type="submit" class="btn btn-primary"
+                    style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 99px;">
+                    Submit Quiz &rarr;
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .quiz-option-card {
+        display: flex;
+        align-items: center;
+        padding: 1.25rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+
+    .quiz-option-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--text-secondary);
+        transform: translateX(4px);
+    }
+
+    /* Hide default radio */
+    .quiz-option-card input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    /* Custom Radio Indicator */
+    .custom-radio {
+        height: 20px;
+        width: 20px;
+        min-width: 20px;
+        background-color: transparent;
+        border: 2px solid var(--text-secondary);
+        border-radius: 50%;
+        margin-right: 1rem;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+
+    /* Selected State Styles */
+    .quiz-option-card input[type="radio"]:checked~.custom-radio {
+        border-color: var(--accent);
+        background-color: transparent;
+        /* Inner dot handles color */
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    }
+
+    .quiz-option-card input[type="radio"]:checked~.custom-radio::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .quiz-option-card input[type="radio"]:checked~.option-text {
+        color: white;
+        font-weight: 500;
+    }
+
+    .quiz-option-card:has(input[type="radio"]:checked) {
+        border-color: var(--accent);
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    @keyframes popIn {
+        from {
+            transform: translate(-50%, -50%) scale(0);
+        }
+
+        to {
+            transform: translate(-50%, -50%) scale(1);
+        }
+    }
+</style>
+{% endblock %}

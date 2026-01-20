@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<div style="display: flex; min-height: 100vh;">
+    <!-- Sidebar -->
+    <div class="sidebar"
+        style="width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 2rem 1rem; position: fixed; height: 100vh; overflow-y: auto;">
+        <h3 style="margin-bottom: 2rem; padding-left: 1rem; font-size: 1.25rem;">Course Admin</h3>
+        <nav>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li><a href="{{ url_for('main.dashboard') }}" class="sidebar-link">Dashboard</a></li>
+                <li><a href="{{ url_for('admin_bp.categories') }}" class="sidebar-link">Categories</a></li>
+                <li><a href="{{ url_for('admin_bp.courses') }}" class="sidebar-link">Courses</a></li>
+                <li><a href="{{ url_for('admin_bp.students') }}" class="sidebar-link active">Students</a></li>
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color: var(--danger);">Logout</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+        <!-- Flash Messages Area -->
+
+        <header style="margin-bottom: 3rem;">
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Student Management</h1>
+            <p style="color: var(--text-secondary);">Manage student approvals and course enrollments.</p>
+        </header>
+
+        <!-- Pending Students -->
+        <div style="margin-bottom: 3rem;">
+            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: var(--text-secondary);">Pending Approval</h3>
+                {% if pending %}
+                <span class="badge badge-warning" style="margin-left: 1rem;">{{ pending|length }} New</span>
+                {% endif %}
+            </div>
+
+            {% if pending %}
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <div class="table-responsive">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="text-align: left; background: rgba(255, 255, 255, 0.02);">
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Name</th>
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Email</th>
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in pending %}
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 1rem;">{{ student.full_name }}</td>
+                                <td style="padding: 1rem; color: var(--text-secondary);">{{ student.email }}</td>
+                                <td style="padding: 1rem;">
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <form action="{{ url_for('admin_bp.approve_student', user_id=student.id) }}"
+                                            method="POST">
+                                            <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                        </form>
+                                        <form action="{{ url_for('admin_bp.reject_student', user_id=student.id) }}"
+                                            method="POST">
+                                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="glass-card" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                No pending requests at this time.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Rejected Students -->
+        {% if rejected %}
+        <div style="margin-bottom: 3rem;">
+            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: var(--text-secondary);">Rejected Requests</h3>
+                <span class="badge badge-danger"
+                    style="margin-left: 1rem; background: rgba(220, 38, 38, 0.2); color: #f87171;">{{ rejected|length
+                    }}</span>
+            </div>
+
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <div class="table-responsive">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="text-align: left; background: rgba(255, 255, 255, 0.02);">
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Name</th>
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Email</th>
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in rejected %}
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 1rem;">{{ student.full_name }}</td>
+                                <td style="padding: 1rem; color: var(--text-secondary);">{{ student.email }}</td>
+                                <td style="padding: 1rem;">
+                                    <form action="{{ url_for('admin_bp.approve_student', user_id=student.id) }}"
+                                        method="POST">
+                                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Approved Students -->
+        <div>
+            <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">Approved Students ({{ approved|length }})
+            </h3>
+            {% if approved %}
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <div class="table-responsive">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="text-align: left; background: rgba(255, 255, 255, 0.02);">
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Name</th>
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Email</th>
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Phone</th>
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Password</th>
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Status</th>
+                                <th
+                                    style="padding: 1rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Enrollment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in approved %}
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 1rem;">{{ student.full_name }}</td>
+                                <td style="padding: 1rem; color: var(--text-secondary);">{{ student.email }}</td>
+                                <td style="padding: 1rem; color: var(--text-secondary);">
+                                    {{ student.phone_number if student.phone_number else 'N/A' }}
+                                </td>
+                                <td style="padding: 1rem; color: var(--text-secondary);">
+                                    <button class="btn btn-sm"
+                                        onclick="openChangePasswordModal('{{ url_for('admin_bp.change_student_password', user_id=student.id) }}', '{{ student.full_name | replace("
+                                        \'", "\\\'" ) | replace('"', '&quot;' ) }}', '{{ student.id }}' )"
+                                        style="background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 0.2rem 0.6rem; cursor: pointer; transition: all 0.2s;"
+                                        onmouseover="this.style.background='var(--accent)'; this.style.color='white'"
+                                        onmouseout="this.style.background='transparent'; this.style.color='var(--accent)'">
+                                        Change
+                                    </button>
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <label class="switch"
+                                        style="position: relative; display: inline-block; width: 40px; height: 22px;">
+                                        <input type="checkbox" onchange="toggleStudentStatus(this, '{{ student.id }}')"
+                                            {% if student.status=='approved' %}checked{% endif %}>
+                                        <span class="slider round"
+                                            style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;">
+                                        </span>
+                                        <style>
+                                            .switch input {
+                                                opacity: 0;
+                                                width: 0;
+                                                height: 0;
+                                            }
+
+                                            .slider:before {
+                                                position: absolute;
+                                                content: "";
+                                                height: 16px;
+                                                width: 16px;
+                                                left: 3px;
+                                                bottom: 3px;
+                                                background-color: white;
+                                                transition: .4s;
+                                                border-radius: 50%;
+                                            }
+
+                                            input:checked+.slider {
+                                                background-color: var(--success);
+                                            }
+
+                                            input:focus+.slider {
+                                                box-shadow: 0 0 1px var(--success);
+                                            }
+
+                                            input:checked+.slider:before {
+                                                transform: translateX(18px);
+                                            }
+                                        </style>
+                                    </label>
+                                    <span id="status-text-{{ student.id }}"
+                                        style="font-size: 0.8rem; margin-left: 8px; color: {% if student.status == 'approved' %}var(--success){% else %}var(--text-secondary){% endif %};">
+                                        {{ 'Active' if student.status == 'approved' else 'Disabled' }}
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        {% for course in student.enrolled_courses %}
+                                        <div class="badge"
+                                            style="background: rgba(56, 139, 253, 0.1); color: var(--accent); border: 1px solid var(--accent); display: flex; align-items: center; gap: 0.5rem;">
+                                            <span>{{ course.title }}</span>
+                                            <button type="button"
+                                                onclick="openUnenrollModal('{{ url_for('admin_bp.unenroll_student', user_id=student.id, course_id=course.id) }}', '{{ student.full_name | replace("
+                                                \'", "\\\'" ) | replace('"', '&quot;' )
+                                                }}', '{{ course.title | replace("\'", " \\\'") | replace('"', '&quot;' )
+                                                }}')"
+                                                style="background: transparent; border: none; color: var(--accent); cursor: pointer; padding: 0; font-size: 1rem; line-height: 1;">&times;</button>
+                                        </div>
+                                        {% else %}
+                                        <span style="color: var(--text-secondary); font-size: 0.85rem;">Not enrolled in
+                                            any
+                                            courses</span>
+                                        {% endfor %}
+                                    </div>
+                                    <form action="{{ url_for('admin_bp.enroll_student', user_id=student.id) }}"
+                                        method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <select name="course_id" required
+                                            style="padding: 0.4rem; background: var(--bg-color); border: 1px solid var(--border); color: var(--text-primary); border-radius: 4px; font-size: 0.9rem;">
+                                            <option value="" disabled selected>Select Course</option>
+                                            {% for course in courses %}
+                                            <option value="{{ course.id }}">{{ course.title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-success btn-sm">Enroll</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="changePasswordModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="glass-card" style="width: 500px; max-width: 90%; border: 1px solid var(--border);">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">Change Password</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Update password for <strong
+                id="cpStudentName" style="color: var(--text-primary);"></strong></p>
+
+        <form id="changePasswordForm" method="POST">
+            <div style="margin-bottom: 2rem;">
+                <label
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">Current
+                    Password</label>
+
+                <!-- Display Area -->
+                <div
+                    style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: var(--text-primary); border-radius: 6px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path
+                                d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3">
+                            </path>
+                        </svg>
+                        <span id="cpCurrentPwDisplay"
+                            style="font-family: monospace; letter-spacing: 1px; color: var(--text-secondary);">Hidden
+                            (Encrypted)</span>
+                    </div>
+                    <button type="button" id="initRevealBtn" onclick="showAdminVerifyInput()"
+                        style="background: none; border: none; cursor: pointer; color: var(--accent); font-size: 0.85rem;">
+                        Show
+                    </button>
+                </div>
+
+                <!-- Admin Verification Input (Hidden by default) -->
+                <div id="adminVerifySection"
+                    style="display: none; background: rgba(56, 139, 253, 0.05); padding: 1rem; border-radius: 6px; border: 1px solid rgba(56, 139, 253, 0.2);">
+                    <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--text-secondary);">Enter
+                        <strong>Admin Password</strong> to view:
+                    </p>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="password" id="adminVerifyPw" placeholder="Admin Password"
+                            style="flex: 1; padding: 0.5rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 4px; font-size: 0.9rem;">
+                        <button type="button" onclick="verifyAndReveal()" class="btn btn-sm btn-primary">Verify</button>
+                    </div>
+                    <p id="verifyErrorMsg"
+                        style="margin: 0.5rem 0 0 0; color: #f87171; font-size: 0.8rem; display: none;"></p>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <label for="new_password"
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">New
+                    Password</label>
+                <input type="text" name="new_password" id="new_password" required placeholder="Enter new password"
+                    style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+            </div>
+
+            <div
+                style="margin-bottom: 2rem; text-align: left; background: rgba(56, 139, 253, 0.1); padding: 1.25rem; border-radius: 8px; border: 1px solid rgba(56, 139, 253, 0.2);">
+                <label style="display: flex; gap: 1rem; cursor: pointer; align-items: start; user-select: none;">
+                    <div style="position: relative; width: 22px; height: 22px; flex-shrink: 0; margin-top: 2px;">
+                        <input type="checkbox" id="confirmPwChangeCheck" onchange="togglePwChangeBtn()"
+                            style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; z-index: 2;">
+                        <div class="custom-checkbox"
+                            style="width: 100%; height: 100%; border: 2px solid var(--text-secondary); border-radius: 4px; transition: all 0.2s;">
+                        </div>
+                    </div>
+                    <span style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">I
+                        confirm that I want to change the password for this student.</span>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="document.getElementById('changePasswordModal').style.display='none'"
+                    class="btn"
+                    style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary);">Cancel</button>
+                <button type="submit" id="changePwBtn" class="btn btn-primary"
+                    style="opacity: 0.5; cursor: not-allowed;" disabled>Update Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentStudentId = null;
+
+    function openChangePasswordModal(url, name, studentId) {
+        document.getElementById('changePasswordForm').action = url;
+        document.getElementById('cpStudentName').innerText = name;
+        document.getElementById('new_password').value = '';
+        currentStudentId = studentId;
+
+        // Reset Reveal UI
+        resetRevealUI();
+
+        // Reset checkbox state
+        document.getElementById('confirmPwChangeCheck').checked = false;
+        togglePwChangeBtn();
+
+        document.getElementById('changePasswordModal').style.display = 'flex';
+    }
+
+    function resetRevealUI() {
+        document.getElementById('cpCurrentPwDisplay').innerText = 'Hidden (Encrypted)';
+        document.getElementById('cpCurrentPwDisplay').style.color = 'var(--text-secondary)';
+        document.getElementById('initRevealBtn').style.display = 'block';
+        document.getElementById('adminVerifySection').style.display = 'none';
+        document.getElementById('adminVerifyPw').value = '';
+        document.getElementById('verifyErrorMsg').style.display = 'none';
+    }
+
+    function showAdminVerifyInput() {
+        document.getElementById('initRevealBtn').style.display = 'none';
+        document.getElementById('adminVerifySection').style.display = 'block';
+        document.getElementById('adminVerifyPw').focus();
+    }
+
+    function verifyAndReveal() {
+        const adminPw = document.getElementById('adminVerifyPw').value;
+        const errorMsg = document.getElementById('verifyErrorMsg');
+
+        if (!adminPw) {
+            errorMsg.innerText = 'Please enter password';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        fetch('{{ url_for("admin_bp.reveal_student_password") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                student_id: currentStudentId,
+                admin_password: adminPw
+            })
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Verification failed');
+                }
+            })
+            .then(data => {
+                if (data.plain_password) {
+                    document.getElementById('cpCurrentPwDisplay').innerText = data.plain_password;
+                    document.getElementById('cpCurrentPwDisplay').style.color = 'var(--success)';
+                    document.getElementById('adminVerifySection').style.display = 'none'; // Hide input on success
+                } else {
+                    document.getElementById('cpCurrentPwDisplay').innerText = 'No record. Reset to view.';
+                    document.getElementById('cpCurrentPwDisplay').style.color = 'var(--warning)';
+                    document.getElementById('adminVerifySection').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                errorMsg.innerText = 'Permission Denied: Incorrect Password';
+                errorMsg.style.display = 'block';
+            });
+    }
+
+    function togglePwChangeBtn() {
+        const btn = document.getElementById('changePwBtn');
+        const check = document.getElementById('confirmPwChangeCheck');
+        if (check.checked) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        }
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function (event) {
+        const passwordModal = document.getElementById('changePasswordModal');
+        const unenrollModal = document.getElementById('unenrollModal');
+        if (event.target == passwordModal) {
+            passwordModal.style.display = 'none';
+        }
+        if (event.target == unenrollModal) {
+            unenrollModal.style.display = 'none';
+        }
+    });
+
+    // Unenroll Modal Functions
+    function openUnenrollModal(url, studentName, courseName) {
+        document.getElementById('unenrollForm').action = url;
+        document.getElementById('unenrollStudentName').innerText = studentName;
+        document.getElementById('unenrollCourseName').innerText = courseName;
+
+        // Reset state
+        document.getElementById('confirmUnenrollCheck').checked = false;
+        toggleUnenrollBtn();
+
+        document.getElementById('unenrollModal').style.display = 'flex';
+    }
+
+    function toggleUnenrollBtn() {
+        const btn = document.getElementById('unenrollBtn');
+        const check = document.getElementById('confirmUnenrollCheck');
+        if (check.checked) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        }
+    }
+</script>
+
+<!-- Unenroll Confirmation Modal -->
+<div id="unenrollModal" class="modal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div
+        style="background: var(--card-bg); width: 100%; max-width: 420px; padding: 2.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.4); text-align: center;">
+
+        <!-- Warning Icon -->
+        <div
+            style="width: 64px; height: 64px; background: rgba(220, 38, 38, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                </path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+        </div>
+
+        <h3 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: 600;">Unenroll Student?</h3>
+
+        <p style="color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6;">
+            You are about to remove
+            <span id="unenrollStudentName"
+                style="color: var(--text-primary); font-weight: 600; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border);"></span>
+            from the course
+            <span id="unenrollCourseName"
+                style="color: var(--text-primary); font-weight: 600; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border);"></span>.
+            <br><span style="font-size: 0.9rem; opacity: 0.8;">This action cannot be undone.</span>
+        </p>
+
+        <form id="unenrollForm" method="POST">
+            <div
+                style="text-align: left; background: rgba(220, 38, 38, 0.05); border: 1px solid rgba(220, 38, 38, 0.2); border-radius: 8px; padding: 1rem; margin-bottom: 2rem;">
+                <label style="display: flex; gap: 0.8rem; cursor: pointer; user-select: none; align-items: flex-start;">
+                    <input type="checkbox" id="confirmUnenrollCheck" onchange="toggleUnenrollBtn()"
+                        style="width: 18px; height: 18px; margin-top: 3px; accent-color: #dc2626;">
+                    <span style="font-size: 0.9rem; line-height: 1.5; color: var(--text-primary);">
+                        I understand that this student will lose access to all course content and progress immediately.
+                    </span>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" onclick="document.getElementById('unenrollModal').style.display='none'"
+                    style="flex: 1; padding: 0.9rem; background: transparent; border: 1px solid var(--border); color: var(--text-primary); border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s;">
+                    Cancel
+                </button>
+                <button type="submit" id="unenrollBtn" disabled
+                    style="flex: 1; padding: 0.9rem; background: #dc2626; border: none; color: white; border-radius: 8px; font-weight: 600; cursor: not-allowed; opacity: 0.5; transition: all 0.2s; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
+                    Unenroll Student
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleStudentStatus(checkbox, studentId) {
+        const statusText = document.getElementById('status-text-' + studentId);
+        const originalState = !checkbox.checked; // State before change
+
+        fetch(`/admin/student/${studentId}/toggle_status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Update failed');
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    if (data.status === 'approved') {
+                        statusText.innerText = 'Active';
+                        statusText.style.color = 'var(--success)';
+                    } else {
+                        statusText.innerText = 'Disabled';
+                        statusText.style.color = 'var(--text-secondary)';
+                    }
+                    showToast(data.message, 'success');
+                } else {
+                    checkbox.checked = originalState; // Revert
+                    showToast(data.message || 'Failed to update status', 'error');
+                }
+            })
+            .catch(error => {
+                checkbox.checked = originalState; // Revert
+                showToast('Connection error. Please try again.', 'error');
+            });
+    }
+
+    // Toast Notification Helper (if not present globally)
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.right = '20px';
+        toast.style.padding = '12px 24px';
+        toast.style.borderRadius = '8px';
+        toast.style.color = 'white';
+        toast.style.background = type === 'success' ? 'var(--success)' : '#dc2626';
+        toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+        toast.style.zIndex = '10000';
+        toast.innerText = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Course Platform{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <!-- Toast Notifications (Global) -->
+    <div class="toast-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="toast-alert alert-{{ category }}">
+            <span>{{ message }}</span>
+            <button
+                onclick="this.parentElement.classList.add('fade-out'); setTimeout(() => this.parentElement.remove(), 400);"
+                style="background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer; font-size:1.5rem; line-height:1; padding:0;">
+                &times;
+            </button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Auto-Dismiss Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toasts = document.querySelectorAll('.toast-alert');
+            if (toasts.length > 0) {
+                // Auto dismiss after 3 seconds
+                setTimeout(() => {
+                    toasts.forEach(toast => {
+                        toast.classList.add('fade-out');
+                        toast.addEventListener('animationend', () => toast.remove());
+                    });
+                }, 3000);
+            }
+        });
+    </script>
+
+    <div class="main-content">
+        <!-- Flash messages block preserved for backward compatibility but empty by default -->
+        {% block flash_messages %}{% endblock %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Mobile Sidebar Overlay (Global) -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('show');
+            }
+        }
+    </script>
+</body>
+
+</html>

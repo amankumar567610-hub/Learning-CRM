@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container container-padding-top" style="max-width: 900px; margin: 0 auto; min-height: 100vh;">
+    <!-- Navigation Header -->
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('main.student_dashboard') }}" class="nav-pill-link">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div>
+        <h1
+            style="margin-bottom: 2rem; font-size: 2.5rem; background: linear-gradient(135deg, white 0%, var(--text-secondary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            My Assignments</h1>
+
+        {% if assignments %}
+        <div class="glass-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border);">
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for item in assignments %}
+                <li class="lesson-item"
+                    style="padding: 1.5rem; border-bottom: 1px solid var(--border); transition: background 0.2s; display: flex; justify-content: space-between; align-items: center;">
+                    <div onclick="window.location='{{ url_for('main.lesson_player', lesson_id=item.lesson.id) }}'"
+                        style="cursor: pointer; flex: 1;">
+                        <span
+                            style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">{{
+                            item.course.title }}</span>
+                        <h4 style="margin: 0.3rem 0; font-size: 1.1rem; color: white;">{{ item.lesson.title }}</h4>
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">Max Score: {{
+                            item.assignment.max_score }}</span>
+                    </div>
+
+                    <div class="lesson-actions" style="display: flex; align-items: center; gap: 1rem;">
+                        <!-- View Button -->
+                        <button class="btn btn-sm view-assignment-btn btn-ghost" data-title="{{ item.lesson.title }}"
+                            data-score="{{ item.assignment.max_score }}"
+                            data-instructions="{{ item.assignment.instructions }}"
+                            data-resource="{{ item.assignment.resource_path|default('', true) }}"
+                            data-resource-url="{{ url_for('main.download_assignment_resource', assignment_id=item.assignment.id) if item.assignment.resource_path else '' }}"
+                            style="color: var(--text-secondary); cursor: pointer;">
+                            View Details
+                        </button>
+
+                        <div style="text-align: right; min-width: 100px;">
+                            {% if item.status == 'Pending' %}
+                            <span
+                                style="background: rgba(255, 193, 7, 0.1); color: #ffc107; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(255, 193, 7, 0.2);">Pending</span>
+                            {% elif item.status == 'Submitted' %}
+                            <span
+                                style="background: rgba(56, 139, 253, 0.1); color: var(--accent); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; border: 1px solid var(--accent);">Submitted</span>
+                            {% else %}
+                            <div style="display: flex; flex-direction: column; align-items: end;">
+                                <span
+                                    style="background: rgba(40, 167, 69, 0.1); color: var(--success); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; border: 1px solid var(--success);">Graded</span>
+                                <span style="font-size: 0.9rem; font-weight: bold; margin-top: 0.3rem; color: white;">{{
+                                    item.submission.grade }} / {{ item.assignment.max_score }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 4rem; color: var(--text-secondary);">
+            <p>No assignments assigned yet.</p>
+            <a href="{{ url_for('main.student_dashboard') }}" class="btn btn-primary" style="margin-top: 1rem;">Browse
+                Courses</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- View Assignment Modal -->
+<div id="viewAssignmentModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="glass-card" style="width: 500px; max-width: 90%;">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <h3 id="viewAssignTitle" style="margin: 0; color: white;">Assignment Details</h3>
+            <button onclick="document.getElementById('viewAssignmentModal').style.display='none'"
+                style="background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5rem;">&times;</button>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: var(--accent); margin-bottom: 0.5rem;">Instructions</h4>
+            <div id="viewAssignInstr"
+                style="color: var(--text-primary); background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 6px; white-space: pre-wrap;">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+            <div>
+                <h4 style="color: var(--accent); margin-bottom: 0.5rem;">Max Score</h4>
+                <div id="viewAssignScore" style="color: white; font-size: 1.1rem;"></div>
+            </div>
+            <div>
+                <h4 style="color: var(--accent); margin-bottom: 0.5rem;">Attached Resource</h4>
+                <div id="viewAssignFile" style="color: white;"></div>
+            </div>
+        </div>
+
+        <div style="text-align: right;">
+            <button onclick="document.getElementById('viewAssignmentModal').style.display='none'" class="btn"
+                style="background: var(--border); color: white;">Close</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    li:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize View Assignment Buttons
+        const viewAssignBtns = document.querySelectorAll('.view-assignment-btn');
+        viewAssignBtns.forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation(); // Prevent triggering the row click
+
+                const title = this.getAttribute('data-title');
+                const instructions = this.getAttribute('data-instructions');
+                const score = this.getAttribute('data-score');
+                const resource = this.getAttribute('data-resource');
+                const resourceUrl = this.getAttribute('data-resource-url');
+
+                document.getElementById('viewAssignTitle').innerText = title;
+                document.getElementById('viewAssignInstr').innerText = instructions;
+                document.getElementById('viewAssignScore').innerText = score;
+
+                const fileEl = document.getElementById('viewAssignFile');
+                if (resource && resource !== 'None' && resource !== '') {
+                    fileEl.innerHTML = `<a href="${resourceUrl}" target="_blank" style="color: var(--accent); text-decoration: underline;">${resource}</a>`;
+                } else {
+                    fileEl.innerHTML = '<span style="color: var(--text-secondary);">No file attached</span>';
+                }
+
+                document.getElementById('viewAssignmentModal').style.display = 'flex';
+            });
+        });
+    });
+</script>
+{% endblock %}

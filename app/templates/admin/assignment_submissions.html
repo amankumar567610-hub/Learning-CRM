@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; padding-top: 2rem;">
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('admin_bp.course_content', course_id=assignment.lesson.module.course.id) }}"
+            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to Course</a>
+    </div>
+
+    <div class="glass-card">
+        <h2 style="margin-bottom: 0.5rem;">Submissions</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+            Assignment: <strong>{{ assignment.lesson.title }}</strong> &bull; Total Submissions: {{
+            assignment.submissions|length }}
+        </p>
+
+        {% if assignment.submissions %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+                    <th style="padding: 1rem; color: var(--text-secondary);">Student</th>
+                    <th style="padding: 1rem; color: var(--text-secondary);">Submitted At</th>
+                    <th style="padding: 1rem; color: var(--text-secondary);">File</th>
+                    <th style="padding: 1rem; color: var(--text-secondary);">Grade</th>
+                    <th style="padding: 1rem; color: var(--text-secondary);">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for submission in assignment.submissions %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1rem;">
+                        <div style="font-weight: 500;">{{ submission.student.full_name }}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ submission.student.email }}
+                        </div>
+                    </td>
+                    <td style="padding: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                        {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                    </td>
+                    <td style="padding: 1rem;">
+                        <a href="{{ url_for('main.download_submission', submission_id=submission.id) }}" target="_blank"
+                            style="color: var(--accent); text-decoration: none;">Download</a>
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if submission.grade is not none %}
+                        <span style="color: var(--success); font-weight: bold;">{{ submission.grade }} / {{
+                            assignment.max_score }}</span>
+                        {% else %}
+                        <span style="color: var(--warning);">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                        <button
+                            onclick="openGradeModal({{ submission.id }}, '{{ submission.grade or '' }}', '{{ submission.feedback or '' }}')"
+                            class="btn btn-sm"
+                            style="border: 1px solid var(--success); color: var(--success); background: rgba(0, 200, 83, 0.1);">
+                            Accept & Grade
+                        </button>
+
+                        <button
+                            onclick="openRejectModal('{{ url_for('main.reject_assignment', submission_id=submission.id) }}')"
+                            class="btn btn-sm"
+                            style="background: var(--danger); color: white; border: 1px solid var(--danger); padding: 0.4rem 1rem;">
+                            Reject
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+            No submissions yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Grade Modal -->
+<div id="gradeModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="glass-card" style="width: 400px; max-width: 90%;">
+        <h3 style="margin-top: 0;">Grade Submission</h3>
+        <form id="gradeForm" method="POST">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Score (Max: {{ assignment.max_score }})</label>
+                <input type="number" name="grade" id="gradeInput" max="{{ assignment.max_score }}" required
+                    class="form-control"
+                    style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label>Feedback</label>
+                <textarea name="feedback" id="feedbackInput" rows="4" class="form-control" placeholder="Add comments..."
+                    style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;"></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" onclick="document.getElementById('gradeModal').style.display='none'" class="btn"
+                    style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary);">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Save Grade</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openGradeModal(id, grade, feedback) {
+        const modal = document.getElementById('gradeModal');
+        const form = document.getElementById('gradeForm');
+        const gradeInput = document.getElementById('gradeInput');
+        const feedbackInput = document.getElementById('feedbackInput');
+
+        form.action = `/admin/submission/${id}/grade`;
+        gradeInput.value = grade;
+        feedbackInput.value = feedback;
+
+        modal.style.display = 'flex';
+    }
+
+    // Modal Close Logic
+    window.onclick = function (event) {
+        if (event.target == document.getElementById('gradeModal')) {
+            document.getElementById('gradeModal').style.display = "none";
+        }
+        if (event.target == document.getElementById('rejectModal')) {
+            document.getElementById('rejectModal').style.display = "none";
+        }
+    }
+
+    function openRejectModal(url) {
+        const modal = document.getElementById('rejectModal');
+        const form = document.getElementById('rejectForm');
+
+        form.action = url;
+        modal.style.display = 'flex';
+    }
+</script>
+
+<!-- Reject Confirmation Modal -->
+<div id="rejectModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1100; justify-content: center; align-items: center;">
+    <div class="glass-card" style="width: 400px; max-width: 90%; text-align: center;">
+        <div style="margin-bottom: 1.5rem;">
+            <div
+                style="width: 60px; height: 60px; background: rgba(220, 38, 38, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                <span style="color: var(--error); font-size: 2rem;">&times;</span>
+            </div>
+            <h3 style="margin: 0; margin-bottom: 0.5rem; color: white;">Confirm Rejection</h3>
+            <p style="color: var(--text-secondary); margin: 0;">
+                Are you sure you want to reject this assignment? The student will be notified and asked to resubmit.
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="document.getElementById('rejectModal').style.display='none'" class="btn"
+                style="flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text-secondary);">Cancel</button>
+            <form id="rejectForm" method="POST" style="flex: 1; margin: 0;">
+                <button type="submit" class="btn btn-danger" style="width: 100%;">Reject</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

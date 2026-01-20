@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block flash_messages %}{% endblock %}
+
+{% block content %}
+<div style="display: flex; min-height: 100vh;">
+    <!-- Sidebar -->
+    <div class="sidebar"
+        style="width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 2rem 1rem; position: fixed; height: 100vh; overflow-y: auto;">
+        <h3 style="margin-bottom: 2rem; padding-left: 1rem; font-size: 1.25rem;">Course Admin</h3>
+        <nav>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li><a href="{{ url_for('main.dashboard') }}" class="sidebar-link active">Dashboard</a></li>
+                <li><a href="{{ url_for('admin_bp.categories') }}" class="sidebar-link">Categories</a></li>
+                <li><a href="{{ url_for('admin_bp.courses') }}" class="sidebar-link">Courses</a></li>
+                <li><a href="{{ url_for('admin_bp.students') }}" class="sidebar-link">Students</a></li>
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color: var(--danger);">Logout</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+        <!-- Flash Messages Area -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div style="margin-bottom: 2rem;">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" role="alert"
+                style="display: flex; align-items: center; gap: 0.5rem;">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Dashboard</h1>
+                <p style="color: var(--text-secondary);">Welcome back, {{ user.full_name }}</p>
+            </div>
+        </header>
+
+        <!-- Notifications -->
+        {% if notifications %}
+        <div style="margin-bottom: 3rem;">
+            <h3 style="margin-bottom: 1rem; font-size: 1.25rem; color: var(--text-primary);">Recent Notifications</h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for notif in notifications %}
+                <div class="glass-card" id="notif-{{ notif.id }}"
+                    style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent);">
+                    <div>
+                        <p style="margin: 0; font-weight: 500; font-size: 0.95rem;">{{ notif.message }}</p>
+                        <small style="color: var(--text-secondary); font-size: 0.8rem;">{{
+                            notif.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        {% if notif.link %}
+                        <a href="{{ notif.link }}" class="btn btn-sm"
+                            style="background: rgba(59, 130, 246, 0.1); color: var(--accent); border: 1px solid var(--accent);">Review</a>
+                        {% endif %}
+                        <button onclick="markAsRead('{{ notif.id }}')"
+                            style="background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s;"
+                            onmouseover="this.style.color='var(--text-primary)'"
+                            onmouseout="this.style.color='var(--text-secondary)'" title="Mark as Read">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+
+        <script>
+            function markAsRead(notificationId) {
+                const card = document.getElementById(`notif-${notificationId}`);
+
+                fetch(`/admin/notification/${notificationId}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            // Animate and remove
+                            card.style.transition = 'all 0.3s ease';
+                            card.style.opacity = '0';
+                            card.style.transform = 'translateX(20px)';
+                            setTimeout(() => {
+                                card.remove();
+                                // If no more notifications, hide the header? Not strictly necessary but nice.
+                                const remaining = document.querySelectorAll('.glass-card[id^="notif-"]');
+                                if (remaining.length === 0) {
+                                    // Find the parent container and hide it or reload page
+                                    // Simple reload to clear the "Recent Notifications" header if empty
+                                    // or just leave the header. User asked for notification to be removed.
+                                }
+                            }, 300);
+                        }
+                    })
+                    .catch(err => console.error('Error marking read:', err));
+            }
+        </script>
+
+
+        <!-- Stats Grid -->
+        <div class="grid-layout">
+            <!-- Pending Requests -->
+            <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div
+                        style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                        Pending Approvals</div>
+                    {% if pending_requests > 0 %}
+                    <span
+                        style="background: var(--warning); width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 8px var(--warning);"></span>
+                    {% endif %}
+                </div>
+                <div
+                    style="font-size: 3rem; font-weight: 800; color: var(--warning); margin: 0.5rem 0; line-height: 1;">
+                    {{ pending_requests }}</div>
+                {% if pending_requests > 0 %}
+                <a href="{{ url_for('admin_bp.students') }}" style="font-size: 0.9rem; font-weight: 500;">Review
+                    Requests &rarr;</a>
+                {% else %}
+                <span style="font-size: 0.9rem; color: var(--text-muted);">All caught up</span>
+                {% endif %}
+            </div>
+
+            <!-- Active Students -->
+            <div class="glass-card">
+                <div
+                    style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                    Active Students</div>
+                <div
+                    style="font-size: 3rem; font-weight: 800; color: var(--success); margin: 0.5rem 0; line-height: 1;">
+                    {{ active_students }}</div>
+                <span style="font-size: 0.9rem; color: var(--text-secondary);">Total: {{ total_students }}</span>
+            </div>
+
+            <!-- Total Courses -->
+            <div class="glass-card">
+                <div
+                    style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                    Courses</div>
+                <div
+                    style="font-size: 3rem; font-weight: 800; color: var(--text-primary); margin: 0.5rem 0; line-height: 1;">
+                    {{ total_courses }}</div>
+                <a href="{{ url_for('admin_bp.courses') }}" style="font-size: 0.9rem; font-weight: 500;">Manage Content
+                    &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

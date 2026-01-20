@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}{{ lesson.title }} - Course Platform{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<style>
+    /* Premium Player Skin */
+    .plyr {
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        --plyr-color-main: var(--accent);
+        --plyr-video-background: #000;
+    }
+
+    /* Security Overlay: Transparent div to block direct video saving */
+    .security-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        pointer-events: none;
+        /* Let clicks pass through to controls */
+    }
+
+    /* Disable context menu on the video container */
+    .video-wrapper {
+        position: relative;
+    }
+</style>
+
+<div class="container" style="max-width: 1000px;">
+    <div style="margin-bottom: 2rem;">
+        {% if current_user.role == 'admin' %}
+        <a href="{{ url_for('admin_bp.course_content', course_id=lesson.module.course.id) }}"
+            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to Course</a>
+        {% else %}
+        <a href="{{ url_for('main.course_view', course_id=lesson.module.course.id) }}"
+            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to Course</a>
+        {% endif %}
+    </div>
+
+    <div class="glass-card" style="padding: 0; overflow: hidden;">
+        <div class="video-wrapper" oncontextmenu="return false;">
+            <div class="security-overlay"></div>
+            <!-- Plyr Video Element -->
+            {% if lesson.video_url and ('youtube.com' in lesson.video_url or 'youtu.be' in lesson.video_url) %}
+            <div class="plyr__video-embed" id="player">
+                <iframe src="{{ lesson.video_url }}" allowfullscreen allowtransparency allow="autoplay"></iframe>
+            </div>
+            {% elif lesson.video_url %}
+            <video id="player" playsinline controls data-poster="">
+                <source src="{{ lesson.video_url }}" type="video/mp4" />
+            </video>
+            {% else %}
+            <div style="padding: 4rem; text-align: center; background: rgba(0,0,0,0.5); color: var(--text-secondary);">
+                <p>No video content for this lesson.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="padding: 2rem;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 style="margin-top: 0; margin-bottom: 0.5rem;">{{ lesson.title }}</h1>
+                    <p style="color: var(--text-secondary); margin: 0;">
+                        Module: {{ lesson.module.title }}
+                    </p>
+                </div>
+                <div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div>
+                            {% if current_user.role != 'admin' %}
+                            <form action="{{ url_for('main.mark_complete', lesson_id=lesson.id) }}" method="POST"
+                                style="display: inline;">
+                                <button type="submit" class="btn"
+                                    style="background: {% if is_completed %}var(--success){% else %}var(--card-bg){% endif %}; border: 1px solid {% if is_completed %}var(--success){% else %}var(--border){% endif %}; color: white;">
+                                    {% if is_completed %}&#10003; Completed{% else %}Mark as Complete{% endif %}
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+
+                        <div class="btn-stack"
+                            style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: flex-end;">
+                            {% if current_user.role != 'admin' %}
+                            {% if quiz %}
+                            {% if quiz_result %}
+                            <a href="{{ url_for('main.view_quiz_result', result_id=quiz_result.id) }}"
+                                class="btn btn-primary"
+                                style="text-decoration: none; background: rgba(59, 130, 246, 0.15); border: 1px solid var(--accent); color: var(--accent);">
+                                View Score &rarr;
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('main.take_quiz', lesson_id=lesson.id) }}" class="btn btn-primary"
+                                style="text-decoration: none; background: var(--accent);">
+                                Take Quiz &rarr;
+                            </a>
+                            {% endif %}
+                            {% endif %}
+
+                            {% if next_lesson %}
+                            <a href="{{ url_for('main.lesson_player', lesson_id=next_lesson.id) }}"
+                                class="btn btn-primary" style="text-decoration: none;">
+                                Next Lesson &rarr;
+                            </a>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if lesson.content %}
+                    <div style="margin-top: 1.5rem; color: var(--text-primary);">
+                        {{ lesson.content }}
+                    </div>
+                    {% endif %}
+
+                    {% if assignment %}
+                    <div class="glass-card" style="margin-top: 2rem; border: 1px solid var(--accent);">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <h3 style="margin: 0; color: var(--accent);">Assignment</h3>
+                            <span style="font-size: 0.9rem; color: var(--text-secondary);">Max Score: {{
+                                assignment.max_score }}</span>
+                        </div>
+
+                        <div
+                            style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                            <h5 style="margin-top: 0; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                Instructions:</h5>
+                            <p style="white-space: pre-wrap;">{{ assignment.instructions }}</p>
+
+                            {% if assignment.resource_path %}
+                            <div
+                                style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                                <a href="{{ url_for('main.download_assignment_resource', assignment_id=assignment.id) }}"
+                                    class="btn btn-sm"
+                                    style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(56, 139, 253, 0.1); border: 1px solid var(--accent); color: var(--accent); text-decoration: none;">
+                                    <span>&#128193;</span> Download Attached Resource
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if submission %}
+                        <div style="border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <div>
+                                    <span style="color: var(--success); font-weight: bold;">&#10003; Submitted</span>
+                                    <span
+                                        style="color: var(--text-secondary); font-size: 0.85rem; margin-left: 0.5rem;">on
+                                        {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                </div>
+                                <a href="{{ url_for('main.download_submission', submission_id=submission.id) }}"
+                                    style="color: var(--text-secondary); font-size: 0.9rem;">Download your file</a>
+                            </div>
+
+                            {% if submission.grade is not none %}
+                            <div
+                                style="background: rgba(56, 139, 253, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid var(--accent);">
+                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    Grade & Feedback</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="font-size: 1.5rem; font-weight: bold; color: white;">{{ submission.grade
+                                        }} / {{ assignment.max_score }}</div>
+                                </div>
+                                {% if submission.feedback %}
+                                <p style="margin-top: 0.5rem; color: var(--text-primary); font-style: italic;">"{{
+                                    submission.feedback }}"</p>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <p style="color: var(--text-secondary); font-style: italic;">Waiting for grading...</p>
+                            {% endif %}
+
+                            <!-- Allow Re-upload? -->
+                            {% if submission.grade is none %}
+                            <div style="margin-top: 1rem;">
+                                <button
+                                    onclick="document.getElementById('uploadForm').style.display='block'; this.style.display='none'"
+                                    class="btn btn-sm"
+                                    style="background: transparent; border: 1px dashed var(--text-secondary); color: var(--text-secondary);">Re-submit
+                                    Assignment</button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <div style="margin-top: 2rem;">
+                            {% if current_user.role == 'student' %}
+                            <form id="uploadForm" action="{{ url_for('main.upload_assignment', lesson_id=lesson.id) }}"
+                                method="POST" enctype="multipart/form-data"
+                                style="{% if submission %}display: none; margin-top: 1rem;{% endif %}">
+                                <div style="margin-bottom: 1rem;">
+                                    <label
+                                        style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Upload
+                                        your work (PDF, Zip, Image, Doc)</label>
+                                    <input type="file" name="file" required
+                                        style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); border-radius: 6px; color: white;">
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit
+                                    Assignment</button>
+                            </form>
+                            {% elif current_user.role == 'admin' and submission and submission.grade is not none %}
+                            <form action="{{ url_for('main.reject_assignment', submission_id=submission.id) }}"
+                                method="POST" style="margin-top: 1rem;">
+                                <button type="submit" class="btn btn-danger"
+                                    style="width: 100%; background: transparent; border: 1px solid var(--danger); color: var(--danger);">
+                                    Reject Assignment (Allow Resubmission)
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+        <script>
+            const player = new Plyr('#player', {
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+                settings: ['captions', 'quality', 'speed', 'loop'],
+                speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+                keyboard: { focused: true, global: true },
+            });
+
+            // Disable right-click globally on this page for extra security
+            document.addEventListener('contextmenu', event => event.preventDefault());
+        </script>
+        {% endblock %}

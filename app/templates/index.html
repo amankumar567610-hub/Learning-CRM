@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-center" style="flex-direction: column; text-align: center;">
+    <h1>Course Platform</h1>
+    <p style="color: var(--text-secondary); max-width: 600px; margin-bottom: 2rem;">
+        Welcome to the premium learning experience.
+    </p>
+    <div>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
+    </div>
+</div>
+{% endblock %}

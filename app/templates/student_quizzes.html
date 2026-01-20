@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<div class="container container-padding-top" style="max-width: 900px; margin: 0 auto; min-height: 100vh;">
+    <!-- Navigation Header -->
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('main.student_dashboard') }}"
+            style="color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; padding: 0.5rem 0;">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div>
+        <header style="margin-bottom: 2rem;">
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">My Quizzes</h1>
+            <p style="color: var(--text-secondary);">Track your performance across all courses.</p>
+        </header>
+        {% if quizzes %}
+        <div class="glass-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border);">
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for item in quizzes %}
+                <li class="quiz-item-mobile"
+                    style="padding: 1.5rem; border-bottom: 1px solid var(--border); transition: background 0.2s; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1;">
+                        <span
+                            style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">{{
+                            item.course.title }}</span>
+                        <h4 style="margin: 0.3rem 0; font-size: 1.1rem; color: white;">{{ item.quiz.title }}</h4>
+                        <span style="font-size: 0.9rem; color: var(--text-secondary);">Lesson: {{
+                            item.quiz.lesson.title }}</span>
+                    </div>
+
+                    <div class="quiz-actions-mobile" style="text-align: right;">
+                        {% if item.result %}
+                        <div
+                            style="font-size: 1.2rem; font-weight: 700; color: {{ 'var(--success)' if item.result.passed else 'var(--warning)' }}; margin-bottom: 0.5rem;">
+                            {{ item.result.score }}%
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                            <a href="{{ url_for('main.view_quiz_result', result_id=item.result.id) }}"
+                                class="btn btn-sm btn-soft text-xs" style="text-decoration: none;">
+                                View Score
+                            </a>
+                            <a href="{{ url_for('main.take_quiz', lesson_id=item.quiz.lesson.id) }}"
+                                class="btn btn-sm btn-ghost text-xs" style="border-color: var(--border);">Retake</a>
+                        </div>
+                        {% else %}
+                        <a href="{{ url_for('main.take_quiz', lesson_id=item.quiz.lesson.id) }}"
+                            class="btn btn-primary">Start Quiz</a>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <div class="glass-card" style="text-align: center; padding: 4rem;">
+            <h3 style="color: var(--text-secondary);">No quizzes available yet.</h3>
+            <p>Quizzes will appear here once you enroll in courses that have them.</p>
+            <a href="{{ url_for('main.student_dashboard') }}" class="btn btn-primary" style="margin-top: 1rem;">Go to
+                Dashboard</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

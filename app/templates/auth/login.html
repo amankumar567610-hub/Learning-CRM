@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-center">
+    <div class="glass-card" style="width: 100%; max-width: 400px;">
+        <h2 class="text-center" style="margin-bottom: 2rem;">Login</h2>
+
+        <form method="POST" action="">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" name="email" id="email" required autocomplete="email">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </form>
+
+        <div class="mt-4 text-center text-xs text-secondary">
+            <p>Don't have an account? <a href="{{ url_for('auth.register') }}" style="color: var(--accent);">Register
+                    here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

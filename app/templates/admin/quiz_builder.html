@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; padding-top: 2rem;">
+    <!-- Header -->
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('admin_bp.course_content', course_id=lesson.module.course.id) }}"
+            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to Course</a>
+    </div>
+
+    <div class="glass-card">
+        <h2 style="margin-bottom: 0.5rem;">Create/Edit Quiz</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Quiz for lesson: <strong>{{ lesson.title
+                }}</strong></p>
+
+        <form action="{{ url_for('admin_bp.add_quiz', lesson_id=lesson.id) }}" method="POST" id="quizForm">
+            <!-- Quiz Title -->
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label style="display: block; margin-bottom: 0.5rem;">Quiz Title</label>
+                <input type="text" name="title" class="form-control" value="{{ quiz.title if quiz else '' }}" required
+                    placeholder="e.g., Module 1 Review"
+                    style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+            </div>
+
+            <!-- Questions Container -->
+            <div id="questions-container">
+                <!-- Questions will be added here via JS -->
+            </div>
+
+            <!-- Add Question Button -->
+            <button type="button" class="btn btn-success" onclick="addQuestion()"
+                style="width: 100%; margin-bottom: 2rem;">
+                + Add Question
+            </button>
+
+            <!-- Submit -->
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Save Quiz</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let questionCount = 0;
+
+    function addQuestion(text = '', options = ['', '', '', ''], correct = 0) {
+        questionCount++;
+        const container = document.getElementById('questions-container');
+
+        const questionHtml = `
+            <div class="question-block" style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <h4 style="margin: 0; color: var(--accent);">Question ${questionCount}</h4>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.parentElement.remove()">Remove</button>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <input type="text" name="questions[${questionCount}][text]" value="${text}" required placeholder="Enter question text..." style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                     <input type="text" name="questions[${questionCount}][options][]" value="${options[0]}" required placeholder="Option A" style="padding: 0.6rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                     <input type="text" name="questions[${questionCount}][options][]" value="${options[1]}" required placeholder="Option B" style="padding: 0.6rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                     <input type="text" name="questions[${questionCount}][options][]" value="${options[2]}" required placeholder="Option C" style="padding: 0.6rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                     <input type="text" name="questions[${questionCount}][options][]" value="${options[3]}" required placeholder="Option D" style="padding: 0.6rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                </div>
+
+                <div class="form-group">
+                    <label style="font-size: 0.9rem; color: var(--text-secondary); margin-right: 1rem;">Correct Answer:</label>
+                    <select name="questions[${questionCount}][correct]" style="padding: 0.5rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                        <option value="0" ${correct == 0 ? 'selected' : ''}>Option A</option>
+                        <option value="1" ${correct == 1 ? 'selected' : ''}>Option B</option>
+                        <option value="2" ${correct == 2 ? 'selected' : ''}>Option C</option>
+                        <option value="3" ${correct == 3 ? 'selected' : ''}>Option D</option>
+                    </select>
+                </div>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', questionHtml);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        {% if existing_questions %}
+        {% for q in existing_questions %}
+        addQuestion({{ q.text | tojson }}, {{ q.options | tojson }}, {{ q.correct }});
+    {% endfor %}
+    {% else %}
+    addQuestion();
+    {% endif %}
+    });
+</script>
+{% endblock %}

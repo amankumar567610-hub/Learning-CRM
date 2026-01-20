@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 700px; padding-top: 4rem; padding-bottom: 4rem;">
+    <!-- Result Header Card -->
+    <div class="glass-card fade-in-up" style="text-align: center; padding: 3rem; margin-bottom: 2.5rem;">
+        {% if result.passed %}
+        <div style="font-size: 4rem; margin-bottom: 1rem; animation: bounce 1s infinite;">🎉</div>
+        <h1
+            style="color: var(--success); margin-bottom: 0.5rem; font-size: 2.5rem; text-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+            Congratulations!</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 2.5rem; color: var(--text-secondary);">You passed the quiz.</p>
+        {% else %}
+        <div style="font-size: 4rem; margin-bottom: 1rem;">😕</div>
+        <h1
+            style="color: var(--error); margin-bottom: 0.5rem; font-size: 2.5rem; text-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+            Keep Trying!</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 2.5rem; color: var(--text-secondary);">You didn't pass this time.
+        </p>
+        {% endif %}
+
+        <div class="score-circle">
+            <span
+                style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Score</span>
+            <div style="font-size: 3.5rem; font-weight: 800; color: white; line-height: 1;">{{ result.score }}%</div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+            <a href="{{ url_for('main.take_quiz', lesson_id=lesson.id) }}" class="btn"
+                style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-primary); padding: 0.8rem 1.5rem;">
+                &#8634; Retake Quiz
+            </a>
+            <a href="{{ url_for('main.lesson_player', lesson_id=lesson.id) }}" class="btn btn-primary"
+                style="padding: 0.8rem 2rem; box-shadow: 0 4px 14px 0 rgba(0,0,0,0.3);">
+                Back to Lesson &rarr;
+            </a>
+        </div>
+    </div>
+
+    <!-- Answer Key Section -->
+    <div class="fade-in-up" style="animation-delay: 0.2s;">
+        <h3
+            style="color: var(--text-primary); display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem; padding-left: 0.5rem;">
+            <span style="background: var(--accent-primary); width: 4px; height: 1.5rem; border-radius: 2px;"></span>
+            Answer Key
+        </h3>
+
+        {% for q in questions_data %}
+        <div class="glass-card question-card"
+            style="padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border);">
+            <p style="font-size: 1.15rem; margin-bottom: 1.25rem; color: white;">
+                <span style="color: var(--text-secondary); margin-right: 0.5rem;">{{ loop.index }}.</span>
+                {{ q.text }}
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                {% for option in q.options %}
+                {% set is_correct = (loop.index0 == q.correct_option) %}
+                {% set is_selected = (q.user_answer is not none and loop.index0 == q.user_answer) %}
+
+                <div class="result-option {% if is_correct %}correct{% elif is_selected %}incorrect{% endif %}">
+                    <div style="display: flex; align-items: center; gap: 0.8rem; flex: 1;">
+                        <span style="font-weight: 500;">{{ option }}</span>
+                    </div>
+
+                    {% if is_correct %}
+                    <span class="badge badge-success">&#10003; Correct</span>
+                    {% elif is_selected %}
+                    <span class="badge badge-error">Your Answer</span>
+                    {% endif %}
+
+                    {% if is_selected and is_correct %}
+                    <span class="badge badge-success" style="margin-left: 0.5rem;">(You)</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .score-circle {
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.03), transparent 70%);
+        border: 1px solid var(--border);
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.2) inset;
+    }
+
+    .question-card {
+        background: #172033;
+        /* Slightly lighter than main bg */
+        transition: transform 0.2s;
+    }
+
+    .question-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .result-option {
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .result-option.correct {
+        border-color: rgba(16, 185, 129, 0.4);
+        background: rgba(16, 185, 129, 0.1);
+        color: white;
+    }
+
+    .result-option.incorrect {
+        border-color: rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--text-primary);
+    }
+
+    .badge-error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+        opacity: 0;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes bounce {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+</style>
+{% endblock %}

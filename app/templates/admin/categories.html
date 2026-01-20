@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<div style="display: flex; min-height: 100vh;">
+    <!-- Sidebar -->
+    <div class="sidebar"
+        style="width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 2rem 1rem; position: fixed; height: 100vh; overflow-y: auto;">
+        <h3 style="margin-bottom: 2rem; padding-left: 1rem; font-size: 1.25rem;">Course Admin</h3>
+        <nav>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li><a href="{{ url_for('main.dashboard') }}" class="sidebar-link">Dashboard</a></li>
+                <li><a href="{{ url_for('admin_bp.categories') }}" class="sidebar-link active">Categories</a></li>
+                <li><a href="{{ url_for('admin_bp.courses') }}" class="sidebar-link">Courses</a></li>
+                <li><a href="{{ url_for('admin_bp.students') }}" class="sidebar-link">Students</a></li>
+                <li style="margin-top: 2rem;">
+                    <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color: var(--danger);">Logout</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+
+        <header style="margin-bottom: 3rem;">
+            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Manage Categories</h1>
+            <p style="color: var(--text-secondary);">Organize your courses with categories.</p>
+        </header>
+
+        <div style="max-width: 800px;">
+            <!-- Add Category Form -->
+            <div class="glass-card" style="margin-bottom: 3rem; overflow: hidden;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem;">Add New Category</h3>
+                <form method="POST" action="">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 250px;">
+                            <label for="name"
+                                style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">Category
+                                Name</label>
+                            <input type="text" name="name" id="name" placeholder="e.g., Web Development" required
+                                style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button type="submit" class="btn btn-primary" style="padding: 0.8rem 1.5rem;">Add
+                                Category</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Category List -->
+            <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">Existing Categories</h3>
+            {% if categories %}
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <div class="table-responsive">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: rgba(255, 255, 255, 0.02);">
+                            <tr>
+                                <th
+                                    style="padding: 1rem; text-align: left; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Name</th>
+                                <th
+                                    style="padding: 1rem; text-align: right; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in categories %}
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 1.25rem 1rem; font-weight: 500;">{{ category.name }}</td>
+                                <td style="padding: 1.25rem 1rem; text-align: right;">
+                                    <button class="btn btn-sm"
+                                        onclick="openDeleteCategoryModal('{{ url_for('admin_bp.delete_category', category_id=category.id) }}', '{{ category.name | replace("
+                                        \'", "\\\'" ) | replace('"', '&quot;' ) }}')"
+                                        style="background: transparent; color: var(--text-secondary); font-weight: 500; border: none; cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;"
+                                        onmouseover="this.style.color='var(--danger)'"
+                                        onmouseout="this.style.color='var(--text-secondary)'">
+                                        <span style="font-size: 0.9rem;">Delete</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="glass-card" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                No categories created yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Delete Category Modal -->
+<div id="deleteCategoryModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="glass-card" style="width: 500px; max-width: 90%; text-align: center; border: 1px solid var(--danger);">
+        <h3 style="color: var(--danger); margin-top: 0;">Delete Category</h3>
+        <p style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.5rem;">Are you sure you want to delete
+            <strong id="delCategoryName" style="color: white;"></strong>?</p>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;">This action typically cannot be
+            undone. Any courses in this category may be affected or deleted depending on system configuration.</p>
+
+        <form id="deleteCategoryForm" method="POST">
+            <div
+                style="margin-bottom: 2rem; text-align: left; background: rgba(220, 38, 38, 0.05); padding: 1.25rem; border-radius: 8px; border: 1px solid rgba(220, 38, 38, 0.15);">
+                <label style="display: flex; gap: 1rem; cursor: pointer; align-items: start; user-select: none;">
+                    <div style="position: relative; width: 22px; height: 22px; flex-shrink: 0; margin-top: 2px;">
+                        <input type="checkbox" id="confirmCatDeleteCheck" onchange="toggleCatDeleteBtn()"
+                            style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; z-index: 2;">
+                        <div class="custom-checkbox"
+                            style="width: 100%; height: 100%; border: 2px solid var(--text-secondary); border-radius: 4px; transition: all 0.2s;">
+                        </div>
+                    </div>
+                    <span style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">I
+                        confirm that I
+                        want to delete this category and understand the consequences.</span>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" onclick="document.getElementById('deleteCategoryModal').style.display='none'"
+                    class="btn"
+                    style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary);">Cancel</button>
+                <button type="submit" id="deleteCategoryBtn" class="btn btn-danger"
+                    style="flex: 1; opacity: 0.5; cursor: not-allowed;" disabled>Confirm Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openDeleteCategoryModal(url, name) {
+        document.getElementById('deleteCategoryForm').action = url;
+        document.getElementById('delCategoryName').innerText = name;
+        document.getElementById('confirmCatDeleteCheck').checked = false;
+        toggleCatDeleteBtn();
+        document.getElementById('deleteCategoryModal').style.display = 'flex';
+    }
+
+    function toggleCatDeleteBtn() {
+        const btn = document.getElementById('deleteCategoryBtn');
+        const check = document.getElementById('confirmCatDeleteCheck');
+        if (check.checked) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        }
+    }
+
+    window.onclick = function (event) {
+        const modal = document.getElementById('deleteCategoryModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
+
+{% endblock %}
