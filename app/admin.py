@@ -47,9 +47,13 @@ def categories():
         name = request.form.get('name')
         if name:
             category = Category(name=name)
-            db.session.add(category)
-            db.session.commit()
-            flash('Category added!', 'success')
+            try:
+                db.session.add(category)
+                db.session.commit()
+                flash('Category added!', 'success')
+            except Exception:
+                db.session.rollback()
+                flash(f'Category "{name}" already exists.', 'warning')
         else:
              flash('Category name is required.', 'danger')
         return redirect(url_for('admin_bp.categories'))
@@ -114,26 +118,19 @@ def courses():
         thumbnail_url = request.form.get('thumbnail_url')
         
         # Handle Image Upload
-        # Handle Image Upload
         if 'thumbnail_file' in request.files:
             file = request.files['thumbnail_file']
             if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                # Ensure unique filename to avoid overwrites (timestamp prefix)
+                from datetime import datetime
+                timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+                filename = f"{timestamp}_{filename}"
+                
+                file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
                 try:
-                    # Cloudinary Upload
-                    from app.utils import upload_file
-                    image_url = upload_file(file, folder="course_thumbnails")
-                    
-                    if image_url:
-                        thumbnail_url = image_url
-                    else:
-                        # Fallback Local
-                        filename = secure_filename(file.filename)
-                        from datetime import datetime
-                        timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
-                        filename = f"{timestamp}_{filename}"
-                        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                        file.save(file_path)
-                        thumbnail_url = filename
+                    file.save(file_path)
+                    thumbnail_url = filename # Store filename, easy to distinguish from full URL
                 except Exception as e:
                     print(f"Error saving course thumbnail: {e}")
                     flash('Error uploading image', 'warning')
@@ -494,21 +491,10 @@ def add_assignment(lesson_id):
         if 'resource_file' in request.files:
             file = request.files['resource_file']
             if file and file.filename != '' and allowed_file(file.filename):
-                try:
-                    # Cloudinary Upload
-                    from app.utils import upload_file
-                    file_url = upload_file(file, folder="assignment_resources")
-                    if file_url:
-                        assignment.resource_path = file_url
-                    else:
-                        # Fallback Local
-                        filename = secure_filename(f"resource_{lesson.id}_{file.filename}")
-                        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                        file.save(file_path)
-                        assignment.resource_path = filename
-                except Exception as e:
-                     print(f"Error uploading assignment resource: {e}")
-                     flash('Error uploading resource file.', 'warning')
+                filename = secure_filename(f"resource_{lesson.id}_{file.filename}")
+                file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                assignment.resource_path = filename
                 
         db.session.add(assignment)
         db.session.commit()
@@ -531,24 +517,12 @@ def edit_assignment(assignment_id):
         file = request.files['resource_file']
         print(f"DEBUG: File found in request: {file.filename}")
         if file and file.filename != '' and allowed_file(file.filename):
-            try:
-                # Cloudinary Upload
-                 from app.utils import upload_file
-                 file_url = upload_file(file, folder="assignment_resources")
-                 
-                 if file_url:
-                     assignment.resource_path = file_url
-                     print(f"DEBUG: Resource uploaded to Cloudinary: {file_url}")
-                 else:
-                    # Fallback Local
-                    filename = secure_filename(f"resource_{assignment.lesson_id}_{file.filename}")
-                    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                    file.save(file_path)
-                    assignment.resource_path = filename
-                    print(f"DEBUG: Resource saved locally: {file_path}")
-            except Exception as e:
-                print(f"Error uploading resource: {e}")
-                flash('Error uploading resource.', 'danger')
+            # Delete old file if exists? (Optional, good practice)
+            filename = secure_filename(f"resource_{assignment.lesson_id}_{file.filename}")
+            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            assignment.resource_path = filename
+            print(f"DEBUG: File saved to {file_path}, resource_path set to {filename}")
         else:
             print(f"DEBUG: File validation failed. Filename: {file.filename}")
             if file.filename != '':

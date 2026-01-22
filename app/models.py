@@ -13,7 +13,7 @@ class User(db.Model, UserMixin):
     phone_number = db.Column(db.String(20), nullable=True)
     password_hash = db.Column(db.String(128), nullable=False)
     plain_password = db.Column(db.String(128), nullable=True) # Storing for admin reference as requested
-    profile_image = db.Column(db.String(300), nullable=True, default='default_avatar.png')
+    profile_image = db.Column(db.String(150), nullable=True, default='default_avatar.png')
     role = db.Column(db.String(20), nullable=False, default='student') # admin, student
     status = db.Column(db.String(20), nullable=False, default='pending') # pending, approved, rejected
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)

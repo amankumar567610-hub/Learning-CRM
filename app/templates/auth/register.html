@@ -1,37 +1,103 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex-center">
-    <div class="glass-card" style="width: 100%; max-width: 400px;">
-        <h2 class="text-center" style="margin-bottom: 2rem;">Student Registration</h2>
+<div class="flex-center" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="card" style="width: 100%; max-width: 480px; padding: 2.5rem;">
+        <div class="text-center" style="margin-bottom: 2rem;">
+            <h2 style="margin-bottom: 0.5rem;">Create Account</h2>
+            <p class="text-muted">Join the learning platform today</p>
+        </div>
 
         <form method="POST" action="">
             <div class="form-group">
                 <label for="full_name">Full Name</label>
-                <input type="text" name="full_name" id="full_name" required>
+                <div class="input-icon-wrapper">
+                    <span class="input-icon-symbol">
+                        <span class="iconify" data-icon="heroicons:user"></span>
+                    </span>
+                    <input type="text" name="full_name" id="full_name" class="form-control has-icon" required
+                        placeholder="John Doe">
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" name="email" id="email" required autocomplete="email">
+                <div class="input-icon-wrapper">
+                    <span class="input-icon-symbol">
+                        <span class="iconify" data-icon="heroicons:envelope"></span>
+                    </span>
+                    <input type="email" name="email" id="email" class="form-control has-icon" required
+                        autocomplete="email" placeholder="name@example.com">
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="phone_number">Phone Number</label>
-                <input type="tel" name="phone_number" id="phone_number" placeholder="Optional" autocomplete="tel">
+                <div class="input-icon-wrapper">
+                    <span class="input-icon-symbol">
+                        <span class="iconify" data-icon="heroicons:phone"></span>
+                    </span>
+                    <input type="tel" name="phone_number" id="phone_number" class="form-control has-icon"
+                        placeholder="+1 (555) 000-0000">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" name="password" id="password" required autocomplete="new-password">
+            <div class="grid-cols-2" style="gap: 1rem; margin-bottom: 1.25rem;">
+                <div>
+                    <label for="password">Password</label>
+                    <div class="input-icon-wrapper">
+                        <span class="input-icon-symbol">
+                            <span class="iconify" data-icon="heroicons:lock-closed"></span>
+                        </span>
+                        <input type="password" name="password" id="password" class="form-control has-icon" required
+                            autocomplete="new-password" placeholder="******">
+                    </div>
+                </div>
+                <div>
+                    <label for="confirm_password">Confirm</label>
+                    <div class="input-icon-wrapper">
+                        <span class="input-icon-symbol">
+                            <span class="iconify" data-icon="heroicons:lock-closed"></span>
+                        </span>
+                        <input type="password" name="confirm_password" id="confirm_password"
+                            class="form-control has-icon" required autocomplete="new-password" placeholder="******">
+                    </div>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+            <div id="password-error"
+                style="display: none; color: var(--danger); font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1rem;">
+                Passwords do not match
+            </div>
+
+            <div class="form-group" style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                <input type="checkbox" id="terms" name="terms" required style="width: auto; margin-top: 0.25rem;">
+                <label for="terms" style="font-size: 0.85rem; line-height: 1.4; margin: 0;">
+                    I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign Up</button>
         </form>
 
-        <div class="mt-4 text-center text-xs text-secondary">
-            <p>Already have an account? <a href="{{ url_for('auth.login') }}" style="color: var(--accent);">Login
-                    here</a></p>
+        <script>
+            document.querySelector('form').addEventListener('submit', function (e) {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
+                const errorMsg = document.getElementById('password-error');
+
+                if (password !== confirmPassword) {
+                    e.preventDefault();
+                    errorMsg.style.display = 'block';
+                } else {
+                    errorMsg.style.display = 'none';
+                }
+            });
+        </script>
+
+        <div class="mt-4 text-center text-xs">
+            <p style="color: var(--text-secondary);">Already have an account? <a href="{{ url_for('auth.login') }}"
+                    style="font-weight: 500;">Sign in</a></p>
         </div>
     </div>
 </div>

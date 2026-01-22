@@ -2,26 +2,45 @@
 
 {% block content %}
 <div class="flex-center">
-    <div class="glass-card" style="width: 100%; max-width: 400px;">
-        <h2 class="text-center" style="margin-bottom: 2rem;">Login</h2>
+    <div class="card" style="width: 100%; max-width: 400px; padding: 2.5rem;">
+        <div class="text-center" style="margin-bottom: 2rem;">
+            <div
+                style="display: inline-flex; width: 48px; height: 48px; border-radius: 12px; background: rgba(59, 130, 246, 0.1); color: var(--primary); align-items: center; justify-content: center; margin-bottom: 1rem;">
+                <span class="iconify" data-icon="heroicons:academic-cap" style="font-size: 1.75rem;"></span>
+            </div>
+            <h2 style="margin-bottom: 0.5rem;">Welcome Back</h2>
+            <p class="text-muted">Please sign in to your account</p>
+        </div>
 
         <form method="POST" action="">
             <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" name="email" id="email" required autocomplete="email">
+                <label for="email">Email</label>
+                <div class="input-icon-wrapper">
+                    <span class="input-icon-symbol">
+                        <span class="iconify" data-icon="heroicons:envelope"></span>
+                    </span>
+                    <input type="email" name="email" id="email" class="form-control has-icon" required
+                        autocomplete="email" placeholder="name@example.com">
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" name="password" id="password" required autocomplete="current-password">
+                <div class="input-icon-wrapper">
+                    <span class="input-icon-symbol">
+                        <span class="iconify" data-icon="heroicons:lock-closed"></span>
+                    </span>
+                    <input type="password" name="password" id="password" class="form-control has-icon" required
+                        autocomplete="current-password" placeholder="Enter your password">
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign In</button>
         </form>
 
-        <div class="mt-4 text-center text-xs text-secondary">
-            <p>Don't have an account? <a href="{{ url_for('auth.register') }}" style="color: var(--accent);">Register
-                    here</a></p>
+        <div class="mt-4 text-center text-xs">
+            <p style="color: var(--text-secondary);">Don't have an account? <a href="{{ url_for('auth.register') }}"
+                    style="font-weight: 500;">Create account</a></p>
         </div>
     </div>
 </div>

@@ -1,127 +1,362 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container container-padding-top" style="max-width: 900px; margin: 0 auto; min-height: 100vh;">
-    <!-- Navigation Header -->
-    <div style="margin-bottom: 2rem;">
-        <a href="{{ url_for('main.student_dashboard') }}" class="nav-pill-link">
-            &larr; Back to Dashboard
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;">
+
+    <!-- Page Header -->
+    <div class="page-header" style="margin-bottom: 3rem; text-align: center;">
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">
+            <span class="text-gradient">My Assignments</span>
+        </h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem;">Track your progress and maximize your grades</p>
+    </div>
+
+    {% if assignments %}
+    <div class="assignments-grid">
+        {% for item in assignments %}
+        <!-- Assignment Card -->
+        <div class="assignment-card glass-panel hover-lift">
+            <!-- Status Indicator Line -->
+            <div
+                class="status-indicator {{ 'status-pending' if item.status == 'Pending' else 'status-submitted' if item.status == 'Submitted' else 'status-graded' }}">
+            </div>
+
+            <div class="card-body">
+                <div class="card-header">
+                    <span class="badge badge-subtle">{{ item.course.title }}</span>
+                    {% if item.status == 'Pending' %}
+                    <span class="status-badge badge-warning">Pending</span>
+                    {% elif item.status == 'Submitted' %}
+                    <span class="status-badge badge-info">Submitted</span>
+                    {% else %}
+                    <span class="status-badge badge-success">Graded: {{ item.submission.grade }}/{{
+                        item.assignment.max_score }}</span>
+                    {% endif %}
+                </div>
+
+                <h3 class="assignment-title">{{ item.lesson.title }}</h3>
+
+                <div class="assignment-meta">
+                    <div class="meta-item">
+                        <span class="iconify" data-icon="heroicons:star"></span>
+                        <span>Max Score: {{ item.assignment.max_score }}</span>
+                    </div>
+                    {% if item.assignment.resource_path %}
+                    <div class="meta-item highlight">
+                        <span class="iconify" data-icon="heroicons:paper-clip"></span>
+                        <span>Attachment</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-actions">
+                    <button class="btn btn-secondary btn-sm view-assignment-btn" data-title="{{ item.lesson.title }}"
+                        data-score="{{ item.assignment.max_score }}"
+                        data-instructions="{{ item.assignment.instructions }}"
+                        data-resource="{{ item.assignment.resource_path|default('', true) }}"
+                        data-resource-url="{{ url_for('main.download_assignment_resource', assignment_id=item.assignment.id) if item.assignment.resource_path else '' }}">
+                        <span class="iconify" data-icon="heroicons:eye"></span>
+                        View Details
+                    </button>
+
+                    <a href="{{ url_for('main.lesson_player', lesson_id=item.lesson.id) }}"
+                        class="btn btn-primary btn-sm">
+                        Go to Lesson
+                        <span class="iconify" data-icon="heroicons:arrow-right"></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state glass-panel">
+        <div class="empty-icon">
+            <span class="iconify" data-icon="heroicons:clipboard-document-check"></span>
+        </div>
+        <h3>All Caught Up!</h3>
+        <p>You don't have any pending assignments. Time to learn something new.</p>
+        <a href="{{ url_for('main.student_dashboard') }}" class="btn btn-primary pulse-animation">
+            Back to Dashboard
         </a>
     </div>
+    {% endif %}
 
-    <!-- Main Content -->
-    <div>
-        <h1
-            style="margin-bottom: 2rem; font-size: 2.5rem; background: linear-gradient(135deg, white 0%, var(--text-secondary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-            My Assignments</h1>
-
-        {% if assignments %}
-        <div class="glass-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border);">
-            <ul style="list-style: none; padding: 0; margin: 0;">
-                {% for item in assignments %}
-                <li class="lesson-item"
-                    style="padding: 1.5rem; border-bottom: 1px solid var(--border); transition: background 0.2s; display: flex; justify-content: space-between; align-items: center;">
-                    <div onclick="window.location='{{ url_for('main.lesson_player', lesson_id=item.lesson.id) }}'"
-                        style="cursor: pointer; flex: 1;">
-                        <span
-                            style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">{{
-                            item.course.title }}</span>
-                        <h4 style="margin: 0.3rem 0; font-size: 1.1rem; color: white;">{{ item.lesson.title }}</h4>
-                        <span style="font-size: 0.9rem; color: var(--text-secondary);">Max Score: {{
-                            item.assignment.max_score }}</span>
-                    </div>
-
-                    <div class="lesson-actions" style="display: flex; align-items: center; gap: 1rem;">
-                        <!-- View Button -->
-                        <button class="btn btn-sm view-assignment-btn btn-ghost" data-title="{{ item.lesson.title }}"
-                            data-score="{{ item.assignment.max_score }}"
-                            data-instructions="{{ item.assignment.instructions }}"
-                            data-resource="{{ item.assignment.resource_path|default('', true) }}"
-                            data-resource-url="{{ url_for('main.download_assignment_resource', assignment_id=item.assignment.id) if item.assignment.resource_path else '' }}"
-                            style="color: var(--text-secondary); cursor: pointer;">
-                            View Details
-                        </button>
-
-                        <div style="text-align: right; min-width: 100px;">
-                            {% if item.status == 'Pending' %}
-                            <span
-                                style="background: rgba(255, 193, 7, 0.1); color: #ffc107; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(255, 193, 7, 0.2);">Pending</span>
-                            {% elif item.status == 'Submitted' %}
-                            <span
-                                style="background: rgba(56, 139, 253, 0.1); color: var(--accent); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; border: 1px solid var(--accent);">Submitted</span>
-                            {% else %}
-                            <div style="display: flex; flex-direction: column; align-items: end;">
-                                <span
-                                    style="background: rgba(40, 167, 69, 0.1); color: var(--success); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; border: 1px solid var(--success);">Graded</span>
-                                <span style="font-size: 0.9rem; font-weight: bold; margin-top: 0.3rem; color: white;">{{
-                                    item.submission.grade }} / {{ item.assignment.max_score }}</span>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% else %}
-        <div style="text-align: center; padding: 4rem; color: var(--text-secondary);">
-            <p>No assignments assigned yet.</p>
-            <a href="{{ url_for('main.student_dashboard') }}" class="btn btn-primary" style="margin-top: 1rem;">Browse
-                Courses</a>
-        </div>
-        {% endif %}
-    </div>
 </div>
 
 <!-- View Assignment Modal -->
-<div id="viewAssignmentModal"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-    <div class="glass-card" style="width: 500px; max-width: 90%;">
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
-            <h3 id="viewAssignTitle" style="margin: 0; color: white;">Assignment Details</h3>
-            <button onclick="document.getElementById('viewAssignmentModal').style.display='none'"
-                style="background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5rem;">&times;</button>
+<div class="modal-overlay" id="viewAssignmentModal">
+    <div class="modal-content glass-panel border-glow" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3 id="viewAssignTitle">Assignment Details</h3>
+            <button onclick="closeAssignModal()" class="close-btn">&times;</button>
         </div>
 
-        <div style="margin-bottom: 1.5rem;">
-            <h4 style="color: var(--accent); margin-bottom: 0.5rem;">Instructions</h4>
-            <div id="viewAssignInstr"
-                style="color: var(--text-primary); background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 6px; white-space: pre-wrap;">
+        <div class="modal-body">
+            <div class="info-group">
+                <label>Instructions</label>
+                <div id="viewAssignInstr" class="instruction-box"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="label">Max Score</span>
+                    <div id="viewAssignScore" class="value"></div>
+                </div>
+                <div class="stat-box">
+                    <span class="label">Resource</span>
+                    <div id="viewAssignFile" class="value"></div>
+                </div>
             </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
-            <div>
-                <h4 style="color: var(--accent); margin-bottom: 0.5rem;">Max Score</h4>
-                <div id="viewAssignScore" style="color: white; font-size: 1.1rem;"></div>
-            </div>
-            <div>
-                <h4 style="color: var(--accent); margin-bottom: 0.5rem;">Attached Resource</h4>
-                <div id="viewAssignFile" style="color: white;"></div>
-            </div>
-        </div>
-
-        <div style="text-align: right;">
-            <button onclick="document.getElementById('viewAssignmentModal').style.display='none'" class="btn"
-                style="background: var(--border); color: white;">Close</button>
+        <div class="modal-footer">
+            <button onclick="closeAssignModal()" class="btn btn-glass">Close</button>
         </div>
     </div>
 </div>
 
 <style>
-    li:hover {
+    /* 
+    ========================================
+       ASSIGNMENTS PAGE CSS
+    ========================================
+    */
+    .text-gradient {
+        background: linear-gradient(to right, #60a5fa, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Grid Layout */
+    .assignments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 2rem;
+    }
+
+    /* Card Styling */
+    .assignment-card {
+        position: relative;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s, box-shadow 0.3s;
+        display: flex;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Status Strip */
+    .status-indicator {
+        width: 6px;
+        height: 100%;
+        background: var(--text-muted);
+    }
+
+    .status-pending {
+        background: #f59e0b;
+    }
+
+    .status-submitted {
+        background: #3b82f6;
+    }
+
+    .status-graded {
+        background: #10b981;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .badge-subtle {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+
+    .badge-warning {
+        color: #f59e0b;
+        background: rgba(245, 158, 11, 0.1);
+    }
+
+    .badge-info {
+        color: #3b82f6;
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .badge-success {
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .assignment-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+
+    .assignment-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .meta-item.highlight {
+        color: var(--primary);
+    }
+
+    .card-actions {
+        margin-top: auto;
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .card-actions .btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: rgba(30, 41, 59, 0.4);
+        border-radius: 20px;
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+        opacity: 0.5;
+    }
+
+    /* Modal Styles */
+    .modal-content.glass-panel {
+        background: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 1.5rem;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+    }
+
+    .instruction-box {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 1.25rem;
+        border-radius: 8px;
+        color: #e2e8f0;
+        line-height: 1.6;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .stat-box {
         background: rgba(255, 255, 255, 0.03);
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .stat-box .label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-box .value {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .modal-footer {
+        text-align: right;
+        margin-top: 2rem;
+    }
+
+    @media (max-width: 640px) {
+        .assignments-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .card-actions {
+            flex-direction: column;
+        }
     }
 </style>
 
 <script>
+    function closeAssignModal() {
+        document.getElementById('viewAssignmentModal').classList.remove('open');
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize View Assignment Buttons
         const viewAssignBtns = document.querySelectorAll('.view-assignment-btn');
         viewAssignBtns.forEach(btn => {
             btn.addEventListener('click', function (e) {
-                e.stopPropagation(); // Prevent triggering the row click
+                e.stopPropagation();
+                e.preventDefault(); // Prevent accidental navigation
 
                 const title = this.getAttribute('data-title');
                 const instructions = this.getAttribute('data-instructions');
@@ -130,18 +365,23 @@
                 const resourceUrl = this.getAttribute('data-resource-url');
 
                 document.getElementById('viewAssignTitle').innerText = title;
-                document.getElementById('viewAssignInstr').innerText = instructions;
+                document.getElementById('viewAssignInstr').innerText = instructions || "No instructions provided.";
                 document.getElementById('viewAssignScore').innerText = score;
 
                 const fileEl = document.getElementById('viewAssignFile');
                 if (resource && resource !== 'None' && resource !== '') {
-                    fileEl.innerHTML = `<a href="${resourceUrl}" target="_blank" style="color: var(--accent); text-decoration: underline;">${resource}</a>`;
+                    fileEl.innerHTML = `<a href="${resourceUrl}" target="_blank" class="btn btn-sm btn-primary"><span class="iconify" data-icon="heroicons:arrow-down-tray"></span> Download</a>`;
                 } else {
-                    fileEl.innerHTML = '<span style="color: var(--text-secondary);">No file attached</span>';
+                    fileEl.innerHTML = '<span style="color: var(--text-muted);">None</span>';
                 }
 
-                document.getElementById('viewAssignmentModal').style.display = 'flex';
+                document.getElementById('viewAssignmentModal').classList.add('open');
             });
+        });
+
+        // Close on click outside
+        document.getElementById('viewAssignmentModal').addEventListener('click', function (e) {
+            if (e.target === this) closeAssignModal();
         });
     });
 </script>

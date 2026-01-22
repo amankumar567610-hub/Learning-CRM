@@ -1,255 +1,341 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container container-padding-top">
-    <header class="student-dashboard-header"
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
-        <div>
-            <h1 style="margin-bottom: 0.5rem; font-size: 2rem;">My Learning</h1>
-            <p style="color: var(--text-secondary);">Welcome back, {{ current_user.full_name }}</p>
-        </div>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <div onclick="openProfileModal()"
-                style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; cursor: pointer; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transition: transform 0.2s; background: var(--accent); display: flex; align-items: center; justify-content: center;"
-                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                {% if current_user.profile_image and current_user.profile_image != 'default_avatar.png' %}
-                <img src="{{ url_for('static', filename='uploads/' + current_user.profile_image) }}" alt="Profile"
-                    style="width: 100%; height: 100%; object-fit: cover;">
-                {% else %}
-                <span style="color: white; font-weight: bold; font-size: 1.2rem;">{{ current_user.full_name[:1] | upper
-                    }}</span>
-                {% endif %}
-            </div>
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost">Logout</a>
-        </div>
-    </header>
+<div class="dashboard-container" style="max-width: 1200px;">
+    <div class="page-header" style="text-align: center; justify-content: center; margin-bottom: 3rem; display: block;">
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">
+            <span class="gradient-text">My Learning</span>
+        </h1>
+        <p class="text-muted" style="font-size: 1.1rem;">Welcome back, <span class="text-white fw-bold">{{
+                current_user.full_name }}</span></p>
+    </div>
 
     <!-- Stats Row -->
-    <div class="grid-layout">
-        <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem;">
-            <div
-                style="width: 56px; height: 56px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent-primary); font-size: 1.75rem;">
-                &#128218;
+    <div class="stats-grid">
+        <div class="glass-card stats-card hover-lift">
+            <div class="stats-icon-wrapper" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa;">
+                <span class="iconify" data-icon="heroicons:book-open"></span>
             </div>
-            <div>
-                <h3 style="margin: 0; font-size: 2rem; line-height: 1;">{{ total_enrolled }}</h3>
-                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Enrolled
-                    Courses</p>
+            <div class="stats-info">
+                <h3>{{ total_enrolled }}</h3>
+                <p>Enrolled Courses</p>
             </div>
         </div>
 
-        <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem;">
-            <div
-                style="width: 56px; height: 56px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--success); font-size: 1.75rem;">
-                &#128200;
+        <div class="glass-card stats-card hover-lift">
+            <div class="stats-icon-wrapper" style="background: rgba(16, 185, 129, 0.1); color: #34d399;">
+                <span class="iconify" data-icon="heroicons:chart-bar"></span>
             </div>
-            <div>
-                <h3 style="margin: 0; font-size: 2rem; line-height: 1;">{{ avg_progress }}%</h3>
-                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Average
-                    Progress</p>
+            <div class="stats-info">
+                <h3>{{ avg_progress }}%</h3>
+                <p>Average Progress</p>
             </div>
         </div>
 
-        <div class="glass-card" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem;">
-            <div
-                style="width: 56px; height: 56px; background: rgba(245, 158, 11, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--warning); font-size: 1.75rem;">
-                &#9999;
+        <div class="glass-card stats-card hover-lift">
+            <div class="stats-icon-wrapper" style="background: rgba(245, 158, 11, 0.1); color: #fbbf24;">
+                <span class="iconify" data-icon="heroicons:pencil-square"></span>
             </div>
-            <div>
-                <h3 style="margin: 0; font-size: 2rem; line-height: 1;">{{ pending_assignments_count }}</h3>
-                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Pending
-                    Assignments</p>
+            <div class="stats-info">
+                <h3>{{ pending_assignments_count }}</h3>
+                <p>Pending Assignments</p>
             </div>
         </div>
     </div>
 
+    <!-- Courses Grid -->
     {% if courses_data %}
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">
+    <h3 class="section-title-minimal">Continue Learning</h3>
+    <div class="courses-grid-minimal">
         {% for item in courses_data %}
         {% set course = item.course %}
-        <div class="glass-card"
-            style="padding: 0; overflow: hidden; transition: all 0.3s ease; cursor: pointer; border: 1px solid var(--border);"
-            onclick="window.location='{{ url_for('main.course_view', course_id=course.id) }}'"
-            onmouseover="this.style.borderColor='var(--accent-primary)'; this.style.transform='translateY(-4px)'"
-            onmouseout="this.style.borderColor='var(--border)'; this.style.transform='translateY(0)'">
+        <div class="minimal-course-card"
+            onclick="window.location='{{ url_for('main.course_view', course_id=course.id) }}'">
 
-            {% if course.thumbnail_url %}
-            {% if course.thumbnail_url.startswith('http') %}
-            <img src="{{ course.thumbnail_url }}" alt="{{ course.title }}"
-                style="width: 100%; height: 200px; object-fit: cover;">
-            {% else %}
-            <img src="{{ url_for('static', filename='uploads/' + course.thumbnail_url) }}" alt="{{ course.title }}"
-                style="width: 100%; height: 200px; object-fit: cover;">
-            {% endif %}
-            {% else %}
-            <div
-                style="width: 100%; height: 200px; background: var(--bg-card-hover); display: flex; align-items: center; justify-content: center; color: var(--text-muted); flex-direction: column; gap: 0.5rem;">
-                <span style="font-size: 2rem;">&#128214;</span>
-                <span style="font-size: 0.9rem;">No Thumbnail</span>
+            <div class="minimal-card-thumb">
+                {% if course.thumbnail_url %}
+                {% if course.thumbnail_url.startswith('http') %}
+                <img src="{{ course.thumbnail_url }}" alt="{{ course.title }}">
+                {% else %}
+                <img src="{{ url_for('static', filename='uploads/' + course.thumbnail_url) }}" alt="{{ course.title }}">
+                {% endif %}
+                {% else %}
+                <div class="minimal-no-thumb">
+                    <span class="iconify" data-icon="heroicons:sparkles"></span>
+                </div>
+                {% endif %}
+
+                <div class="minimal-category-tag">{{ course.category.name }}</div>
             </div>
-            {% endif %}
 
-            <div style="padding: 1.5rem;">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                    <span class="badge badge-success"
-                        style="background: rgba(59, 130, 246, 0.1); color: var(--accent-primary);">{{
-                        course.category.name }}</span>
-                </div>
+            <div class="minimal-card-body">
+                <h4 class="minimal-course-title">{{ course.title }}</h4>
 
-                <h3 style="margin: 0 0 1rem; font-size: 1.25rem; line-height: 1.4;">{{ course.title }}</h3>
-
-                <!-- Progress Bar -->
-                <div
-                    style="background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 0.75rem;">
-                    <div
-                        style="background: var(--success); height: 100%; width: {{ item.progress }}%; border-radius: 4px;">
+                <div class="minimal-progress-wrapper">
+                    <div class="minimal-progress-info">
+                        <span class="progress-percentage">{{ item.progress }}%</span>
+                        <span class="progress-fraction">{{ item.completed }}/{{ item.total_lessons }}</span>
                     </div>
-                </div>
-
-                <div
-                    style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary);">
-                    <span style="font-weight: 500; color: var(--success);">{{ item.progress }}% Complete</span>
-                    <span>{{ item.completed }}/{{ item.total_lessons }} Lessons</span>
+                    <div class="minimal-progress-track">
+                        <div class="minimal-progress-fill" style="width: {{ item.progress }}%;"></div>
+                    </div>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="glass-card flex-center" style="min-height: 400px; flex-direction: column; text-align: center;">
-        <div style="font-size: 4rem; margin-bottom: 1rem;">&#128193;</div>
-        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">No courses assigned yet.</h3>
-        <p style="color: var(--text-secondary); max-width: 400px;">It looks like you haven't been enrolled in any
-            courses yet. Please wait for an administrator to assign you a course.</p>
+    <div class="empty-state">
+        <div class="empty-icon">
+            <span class="iconify" data-icon="heroicons:folder-open"></span>
+        </div>
+        <h3>No courses assigned yet</h3>
+        <p>It looks like you haven't been enrolled in any courses yet. Please wait
+            for an administrator to assign you a course.</p>
     </div>
     {% endif %}
 </div>
 
-<!-- Profile Modal -->
-<div id="profileModal"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
-    <div class="glass-card"
-        style="width: 400px; max-width: 90%; position: relative; animation: slideIn 0.3s ease; max-height: 90vh; overflow-y: auto;">
-        <button onclick="document.getElementById('profileModal').style.display='none'"
-            style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5rem; z-index: 10;">&times;</button>
+<!-- Profile Modal (Optimized) -->
+<!-- Profile Modal has been moved to base.html -->
 
-        <form action="{{ url_for('main.update_profile') }}" method="POST" enctype="multipart/form-data">
-            <div style="text-align: center; margin-bottom: 2rem; position: relative;">
-                <div style="width: 100px; height: 100px; margin: 0 auto 1rem auto; position: relative; cursor: pointer;"
-                    onclick="document.getElementById('profile_image_input').click()">
-                    <div
-                        style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: var(--accent); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4); border: 3px solid var(--bg-color);">
-                        {% if current_user.profile_image and current_user.profile_image != 'default_avatar.png' %}
-                        <img id="avatarPreview"
-                            src="{{ url_for('static', filename='uploads/' + current_user.profile_image) }}"
-                            style="width: 100%; height: 100%; object-fit: cover;">
-                        {% else %}
-                        <span id="avatarInitial" style="color: white; font-size: 2.5rem; font-weight: bold;">{{
-                            current_user.full_name[:1] | upper }}</span>
-                        <img id="avatarPreview" src=""
-                            style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                        {% endif %}
-                    </div>
-                    <!-- Overlay Icon -->
-                    <div
-                        style="position: absolute; bottom: 0; right: 0; background: var(--primary); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-color);">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
-                            </path>
-                            <circle cx="12" cy="13" r="4"></circle>
-                        </svg>
-                    </div>
-                </div>
-                <input type="file" name="profile_image" id="profile_image_input" style="display: none;" accept="image/*"
-                    onchange="previewAvatar(this)">
-
-                <h2 style="margin: 0; font-size: 1.5rem;">{{ current_user.full_name }}</h2>
-                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.2rem;">{{ current_user.email
-                    }}</div>
-                <div style="margin-top: 0.5rem;">
-                    <span class="badge badge-success"
-                        style="background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; border: 1px solid rgba(16, 185, 129, 0.2);">Active
-                        Account</span>
-                </div>
-            </div>
-
-            <div
-                style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; border: 1px solid var(--border);">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <label
-                            style="display: block; color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.2rem;">Phone
-                            Number</label>
-                        <div style="color: var(--text-primary); font-size: 0.95rem;">{{ current_user.phone_number if
-                            current_user.phone_number else 'Not provided' }}</div>
-                    </div>
-                    <div>
-                        <label
-                            style="display: block; color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.2rem;">Member
-                            Since</label>
-                        <div style="color: var(--text-primary); font-size: 0.95rem;">
-                            {% if current_user.created_at %}
-                            {{ current_user.created_at.strftime('%b %Y') }}
-                            {% else %}
-                            Jan 2025
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 1.5rem;">
-                <h4
-                    style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; font-size: 1rem; color: var(--accent);">
-                    Change Password</h4>
-                <div class="form-group" style="margin-bottom: 0.8rem;">
-                    <input type="password" name="current_password" placeholder="Current Password"
-                        style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: white; border-radius: 6px;">
-                </div>
-                <div class="form-group" style="margin-bottom: 0.8rem;">
-                    <input type="password" name="new_password" placeholder="New Password"
-                        style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: white; border-radius: 6px;">
-                </div>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <input type="password" name="confirm_password" placeholder="Confirm New Password"
-                        style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: white; border-radius: 6px;">
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem;">Save Profile
-                Changes</button>
-        </form>
-    </div>
-</div>
-
-<script>
-    function openProfileModal() {
-        document.getElementById('profileModal').style.display = 'flex';
+<style>
+    /* Layout */
+    .dashboard-container {
+        padding: clamp(1rem, 4vw, 2rem);
+        max-width: 1400px;
+        margin: 0 auto;
     }
 
-    function previewAvatar(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                const img = document.getElementById('avatarPreview');
-                const initial = document.getElementById('avatarInitial');
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+    }
 
-                img.src = e.target.result;
-                img.style.display = 'block';
-                if (initial) initial.style.display = 'none';
-            }
-            reader.readAsDataURL(input.files[0]);
+    .gradient-text {
+        background: linear-gradient(to right, #60a5fa, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Avatar */
+    .avatar-trigger {
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .avatar-ring {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        padding: 2px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+    }
+
+    .avatar-img-main,
+    .avatar-placeholder-main {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--bg-main);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-surface);
+        color: white;
+        font-weight: 700;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stats-card {
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stats-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+    }
+
+    .stats-info h3 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+        color: white;
+    }
+
+    .stats-info p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    /* Courses Grid */
+    .section-title {
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+        padding-left: 0.75rem;
+        border-left: 4px solid var(--primary);
+        color: white !important;
+        /* Force visibility */
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .course-card {
+        cursor: pointer;
+        padding: 0;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .course-thumb {
+        height: 180px;
+        position: relative;
+        background: var(--bg-surface);
+    }
+
+    .course-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+
+    .course-card:hover .course-thumb img {
+        transform: scale(1.05);
+    }
+
+    .no-thumb {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    }
+
+    .category-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(4px);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .course-body {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .course-title {
+        font-size: 1.15rem;
+        margin: 0 0 1.5rem 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .progress-container {
+        margin-top: auto;
+    }
+
+    .progress-track {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), #60a5fa);
+        border-radius: 10px;
+    }
+
+    .progress-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+    }
+
+    .progress-text {
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .lesson-count {
+        color: var(--text-secondary);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: var(--radius-md);
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+    }
+
+    .empty-state h3 {
+        margin: 1rem 0 0.5rem;
+        color: white;
+    }
+
+    .empty-state p {
+        color: var(--text-muted);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+        .header-actions {
+            display: none !important;
         }
     }
-
-    window.onclick = function (event) {
-        var modal = document.getElementById('profileModal');
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
-</script>
+</style>
 
 {% endblock %}

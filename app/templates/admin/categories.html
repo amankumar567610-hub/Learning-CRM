@@ -1,133 +1,141 @@
 {% extends "base.html" %}
 
+{% block title %}Categories - Admin{% endblock %}
 
 {% block content %}
-<div style="display: flex; min-height: 100vh;">
-    <!-- Sidebar -->
-    <div class="sidebar"
-        style="width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 2rem 1rem; position: fixed; height: 100vh; overflow-y: auto;">
-        <h3 style="margin-bottom: 2rem; padding-left: 1rem; font-size: 1.25rem;">Course Admin</h3>
-        <nav>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-                <li><a href="{{ url_for('main.dashboard') }}" class="sidebar-link">Dashboard</a></li>
-                <li><a href="{{ url_for('admin_bp.categories') }}" class="sidebar-link active">Categories</a></li>
-                <li><a href="{{ url_for('admin_bp.courses') }}" class="sidebar-link">Courses</a></li>
-                <li><a href="{{ url_for('admin_bp.students') }}" class="sidebar-link">Students</a></li>
-                <li style="margin-top: 2rem;">
-                    <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color: var(--danger);">Logout</a>
-                </li>
-            </ul>
-        </nav>
+<div class="modern-page-header">
+    <div class="header-content">
+        <h1 class="header-title">Categories</h1>
+        <p class="header-subtitle">Organize your courses efficiently.</p>
+    </div>
+    <div class="header-actions">
+        <!-- Optional: Place high-level actions here if needed -->
+    </div>
+</div>
+
+<div style="max-width: 900px; margin: 0 auto;">
+    <!-- Add Category -->
+    <div class="glass-card" style="margin-bottom: 2rem; padding: 2rem;">
+        <h3 class="card-title"
+            style="font-size: 1.1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <span class="iconify" data-icon="heroicons:folder-plus" style="color: var(--primary);"></span>
+            Add New Category
+        </h3>
+        <form method="POST" action="">
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <div style="flex: 1;">
+                    <input type="text" name="name" required placeholder="e.g. Data Science, Web Development..."
+                        class="form-control" style="height: 48px; font-size: 1rem;">
+                </div>
+                <button type="submit" class="btn btn-primary"
+                    style="height: 48px; padding-left: 2rem; padding-right: 2rem;">
+                    <span class="iconify" data-icon="heroicons:plus"></span> Add
+                </button>
+            </div>
+        </form>
     </div>
 
-    <!-- Main Content -->
-    <div class="content-wrapper">
+    <!-- Category List -->
+    <div class="glass-card" style="padding: 0; overflow: hidden;">
+        <div class="card-header"
+            style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; background: rgba(0,0,0,0.2);">
+            <h3
+                style="margin: 0; font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">
+                Existing Categories</h3>
+        </div>
 
-        <header style="margin-bottom: 3rem;">
-            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Manage Categories</h1>
-            <p style="color: var(--text-secondary);">Organize your courses with categories.</p>
-        </header>
-
-        <div style="max-width: 800px;">
-            <!-- Add Category Form -->
-            <div class="glass-card" style="margin-bottom: 3rem; overflow: hidden;">
-                <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem;">Add New Category</h3>
-                <form method="POST" action="">
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 250px;">
-                            <label for="name"
-                                style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">Category
-                                Name</label>
-                            <input type="text" name="name" id="name" placeholder="e.g., Web Development" required
-                                style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
-                        </div>
-                        <div style="display: flex; align-items: flex-end;">
-                            <button type="submit" class="btn btn-primary" style="padding: 0.8rem 1.5rem;">Add
-                                Category</button>
-                        </div>
+        {% if categories %}
+        <div class="list-group">
+            {% for category in categories %}
+            <div class="list-item"
+                style="padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="width: 36px; height: 36px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                        <span class="iconify" data-icon="heroicons:folder"></span>
                     </div>
-                </form>
-            </div>
-
-            <!-- Category List -->
-            <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">Existing Categories</h3>
-            {% if categories %}
-            <div class="glass-card" style="padding: 0; overflow: hidden;">
-                <div class="table-responsive">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead style="background: rgba(255, 255, 255, 0.02);">
-                            <tr>
-                                <th
-                                    style="padding: 1rem; text-align: left; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
-                                    Name</th>
-                                <th
-                                    style="padding: 1rem; text-align: right; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">
-                                    Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for category in categories %}
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <td style="padding: 1.25rem 1rem; font-weight: 500;">{{ category.name }}</td>
-                                <td style="padding: 1.25rem 1rem; text-align: right;">
-                                    <button class="btn btn-sm"
-                                        onclick="openDeleteCategoryModal('{{ url_for('admin_bp.delete_category', category_id=category.id) }}', '{{ category.name | replace("
-                                        \'", "\\\'" ) | replace('"', '&quot;' ) }}')"
-                                        style="background: transparent; color: var(--text-secondary); font-weight: 500; border: none; cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;"
-                                        onmouseover="this.style.color='var(--danger)'"
-                                        onmouseout="this.style.color='var(--text-secondary)'">
-                                        <span style="font-size: 0.9rem;">Delete</span>
-                                    </button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <span style="font-weight: 500; font-size: 1.05rem;">{{ category.name }}</span>
+                    <span class="badge"
+                        style="background: rgba(255,255,255,0.05); color: var(--text-secondary); font-weight: normal;">{{
+                        category.courses|length }} Courses</span>
+                </div>
+                <div>
+                    <button
+                        onclick="openDeleteCategoryModal('{{ url_for('admin_bp.delete_category', category_id=category.id) }}', '{{ category.name | replace("'", "\\'") }}')"
+                        class="btn btn-sm btn-danger" title="Delete Category">
+                        <span class="iconify" data-icon="heroicons:trash"></span>
+                    </button>
                 </div>
             </div>
-            {% else %}
-            <div class="glass-card" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                No categories created yet.
-            </div>
-            {% endif %}
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="text-center" style="padding: 4rem;">
+            <div
+                style="width: 64px; height: 64px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--text-muted);">
+                <span class="iconify" data-icon="heroicons:folder-open" style="font-size: 2rem;"></span>
+            </div>
+            <p class="text-muted">No categories found.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
-</div>
 
-<!-- Delete Category Modal -->
-<div id="deleteCategoryModal"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-    <div class="glass-card" style="width: 500px; max-width: 90%; text-align: center; border: 1px solid var(--danger);">
-        <h3 style="color: var(--danger); margin-top: 0;">Delete Category</h3>
-        <p style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.5rem;">Are you sure you want to delete
-            <strong id="delCategoryName" style="color: white;"></strong>?</p>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;">This action typically cannot be
-            undone. Any courses in this category may be affected or deleted depending on system configuration.</p>
+<!-- Category Delete Modal -->
+<div id="deleteCategoryModal" class="modal"
+    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; padding: 1rem;">
+
+    <style>
+        @keyframes modalPop {
+            0% {
+                transform: scale(0.95) translateY(10px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+
+    <div class="glass-card"
+        style="width: min(100%, 400px); padding: clamp(1.5rem, 5vw, 2.5rem); border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(239, 68, 68, 0.1); animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div class="anime-pulse"
+                style="width: 72px; height: 72px; background: radial-gradient(circle, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0) 70%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">
+                <span class="iconify" data-icon="heroicons:exclamation-triangle"
+                    style="font-size: 2.5rem; filter: drop-shadow(0 0 8px rgba(239,68,68,0.4));"></span>
+            </div>
+            <h3
+                style="margin: 0 0 0.5rem 0; color: white; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px;">
+                Delete Category?</h3>
+            <p class="text-muted" style="line-height: 1.5; font-size: 0.95rem;">Are you sure you want to remove <strong
+                    id="delCategoryName" class="text-white"></strong>?<br>This action cannot be undone.</p>
+        </div>
 
         <form id="deleteCategoryForm" method="POST">
-            <div
-                style="margin-bottom: 2rem; text-align: left; background: rgba(220, 38, 38, 0.05); padding: 1.25rem; border-radius: 8px; border: 1px solid rgba(220, 38, 38, 0.15);">
-                <label style="display: flex; gap: 1rem; cursor: pointer; align-items: start; user-select: none;">
-                    <div style="position: relative; width: 22px; height: 22px; flex-shrink: 0; margin-top: 2px;">
+            <div class="form-group"
+                style="background: rgba(239, 68, 68, 0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.15); margin-bottom: 1.5rem; transition: background 0.2s;">
+                <label style="display: flex; gap: 0.75rem; cursor: pointer; margin: 0; align-items: flex-start;">
+                    <div style="position: relative; top: 2px;">
                         <input type="checkbox" id="confirmCatDeleteCheck" onchange="toggleCatDeleteBtn()"
-                            style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; z-index: 2;">
-                        <div class="custom-checkbox"
-                            style="width: 100%; height: 100%; border: 2px solid var(--text-secondary); border-radius: 4px; transition: all 0.2s;">
-                        </div>
+                            style="width: 20px; height: 20px; accent-color: var(--danger); cursor: pointer;">
                     </div>
-                    <span style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">I
-                        confirm that I
-                        want to delete this category and understand the consequences.</span>
+                    <span class="text-sm" style="color: #fca5a5; font-size: 0.9rem; line-height: 1.4;">I confirm I want
+                        to permanently delete this category and all associated courses.</span>
                 </label>
             </div>
-
-            <div style="display: flex; gap: 1rem;">
+            <div style="display: flex; gap: 0.75rem;">
                 <button type="button" onclick="document.getElementById('deleteCategoryModal').style.display='none'"
-                    class="btn"
-                    style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary);">Cancel</button>
+                    class="btn btn-ghost"
+                    style="flex: 1; height: 48px; border: 1px solid rgba(255,255,255,0.1); font-weight: 500;">Cancel</button>
                 <button type="submit" id="deleteCategoryBtn" class="btn btn-danger"
-                    style="flex: 1; opacity: 0.5; cursor: not-allowed;" disabled>Confirm Delete</button>
+                    style="flex: 1; height: 48px; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); transition: all 0.2s;"
+                    disabled>
+                    Delete It
+                </button>
             </div>
         </form>
     </div>
@@ -143,25 +151,11 @@
     }
 
     function toggleCatDeleteBtn() {
-        const btn = document.getElementById('deleteCategoryBtn');
-        const check = document.getElementById('confirmCatDeleteCheck');
-        if (check.checked) {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
-        } else {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
-        }
+        document.getElementById('deleteCategoryBtn').disabled = !document.getElementById('confirmCatDeleteCheck').checked;
     }
 
-    window.onclick = function (event) {
-        const modal = document.getElementById('deleteCategoryModal');
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
+    window.onclick = function (e) {
+        if (e.target.id == 'deleteCategoryModal') e.target.style.display = 'none';
     }
 </script>
-
 {% endblock %}

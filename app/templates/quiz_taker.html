@@ -1,140 +1,343 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container" style="max-width: 800px; padding-top: 2rem;">
-    <!-- Header -->
-    <div style="margin-bottom: 2rem; display: flex; gap: 1rem;">
-        <!-- <a href="{{ url_for('main.student_quizzes') }}"
-            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to My Quizzes</a>
-        <span style="color: var(--text-secondary);">|</span> -->
+<div class="quiz-container">
+    <div class="page-header-simple">
         <a href="{{ url_for('main.lesson_player', lesson_id=lesson.id) }}"
-            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to Lesson</a>
+            class="btn btn-sm btn-ghost hover-slide-left">
+            <span class="iconify" data-icon="heroicons:arrow-left"></span> Back to Lesson
+        </a>
     </div>
 
-    <div class="glass-card">
-        <div style="border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-            <h1 style="margin-top: 0;">{{ quiz.title }}</h1>
-            <p style="color: var(--text-secondary);">Test your knowledge for: <strong>{{ lesson.title }}</strong></p>
-        </div>
+    <div class="flex-center" style="min-height: auto; padding-top: 1rem; padding-bottom: 4rem;">
+        <div class="glass-card quiz-card">
+            <div class="quiz-header">
+                <span class="badge badge-primary badge-pill">Quiz</span>
+                <h1 class="quiz-title">{{ quiz.title }}</h1>
+                <p class="quiz-subtitle">Quiz for lesson: <span class="text-white">{{ lesson.title }}</span></p>
 
-        <form action="{{ url_for('main.submit_quiz', lesson_id=lesson.id) }}" method="POST">
-            {% for q in questions %}
-            <div style="margin-bottom: 3rem; animation: fadeIn 0.5s ease-out;">
-                <h4 style="margin-bottom: 1.25rem; color: var(--text-primary); font-size: 1.2rem; font-weight: 600;">{{
-                    loop.index }}. {{ q.text }}</h4>
-                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
-                    {% for option in q.options %}
-                    <label class="quiz-option-card">
-                        <input type="radio" name="question_{{ q.id }}" value="{{ loop.index0 }}" required>
-                        <div class="custom-radio"></div>
-                        <span class="option-text">{{ option }}</span>
-                    </label>
-                    {% endfor %}
+                <div class="quiz-progress">
+                    <div class="progress-label">
+                        <span>Progress</span>
+                        <span>0%</span>
+                    </div>
+                    <div class="progress-track-thin">
+                        <div class="progress-fill-gradient" style="width: 0%" id="quizProgress"></div>
+                    </div>
                 </div>
             </div>
-            {% endfor %}
 
-            <div style="margin-top: 3rem; text-align: right;">
-                <button type="submit" class="btn btn-primary"
-                    style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 99px;">
-                    Submit Quiz &rarr;
-                </button>
-            </div>
-        </form>
+            <form action="{{ url_for('main.submit_quiz', lesson_id=lesson.id) }}" method="POST" id="quizForm">
+                {% for q in questions %}
+                <div class="question-block">
+                    <h4 class="question-text">
+                        <span class="question-number">{{ loop.index }}</span> {{ q.text }}
+                    </h4>
+
+                    <div class="options-group">
+                        {% for option in q.options %}
+                        <label class="option-card">
+                            <input type="radio" name="question_{{ q.id }}" value="{{ loop.index0 }}" required
+                                onchange="updateProgress()">
+                            <div class="option-content">
+                                <div class="option-marker">
+                                    <span class="marker-circle"></span>
+                                    <span class="marker-check iconify" data-icon="heroicons:check"></span>
+                                </div>
+                                <span class="option-label">{{ option }}</span>
+                            </div>
+                            <div class="option-glow"></div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="quiz-footer">
+                    <button type="submit" class="btn btn-primary btn-lg btn-glow hover-lift">
+                        Submit Quiz <span class="iconify" data-icon="heroicons:paper-airplane"
+                            style="margin-left: 0.5rem;"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<style>
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
+<script>
+    function updateProgress() {
+        const total = {{ questions| length
+    }};
+    const checked = document.querySelectorAll('input[type="radio"]:checked').length;
+    const percent = Math.round((checked / total) * 100);
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    document.getElementById('quizProgress').style.width = percent + '%';
+    document.querySelector('.progress-label span:last-child').textContent = percent + '%';
+    }
+</script>
+
+<style>
+    /* Layout */
+    .quiz-container {
+        padding: clamp(1rem, 3vw, 2rem);
+        max-width: 1000px;
+        margin: 0 auto;
     }
 
-    .quiz-option-card {
+    .page-header-simple {
+        margin-bottom: 2rem;
+    }
+
+    .hover-slide-left:hover span {
+        transform: translateX(-4px);
+    }
+
+    .hover-slide-left span {
+        transition: transform 0.2s;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+
+    /* Card */
+    .quiz-card {
+        width: 100%;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+    }
+
+    .quiz-header {
+        padding: clamp(2rem, 5vw, 3rem);
+        background: linear-gradient(to bottom, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        text-align: center;
+    }
+
+    .quiz-title {
+        font-size: clamp(2rem, 5vw, 2.5rem);
+        font-weight: 800;
+        margin: 1rem 0 0.5rem;
+        background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .quiz-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Progress */
+    .quiz-progress {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .progress-track-thin {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill-gradient {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), #3b82f6);
+        transition: width 0.3s ease;
+    }
+
+    /* Questions */
+    .question-block {
+        padding: clamp(1.5rem, 4vw, 2.5rem);
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .question-block:last-child {
+        border-bottom: none;
+    }
+
+    .question-text {
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+        display: flex;
+        gap: 1rem;
+        line-height: 1.5;
+    }
+
+    .question-number {
+        color: var(--primary);
+        font-family: monospace;
+        background: rgba(59, 130, 246, 0.1);
+        width: 28px;
+        height: 28px;
         display: flex;
         align-items: center;
-        padding: 1.25rem;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        justify-content: center;
+        border-radius: 50%;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    /* Options */
+    .options-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .option-card {
         position: relative;
+        cursor: pointer;
+        display: block;
     }
 
-    .quiz-option-card:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: var(--text-secondary);
-        transform: translateX(4px);
-    }
-
-    /* Hide default radio */
-    .quiz-option-card input[type="radio"] {
+    .option-card input {
         position: absolute;
         opacity: 0;
         cursor: pointer;
-        height: 0;
-        width: 0;
     }
 
-    /* Custom Radio Indicator */
-    .custom-radio {
-        height: 20px;
-        width: 20px;
-        min-width: 20px;
-        background-color: transparent;
-        border: 2px solid var(--text-secondary);
-        border-radius: 50%;
-        margin-right: 1rem;
+    .option-content {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        /* Softer border */
+        border-radius: var(--radius-sm);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
-        transition: all 0.2s ease;
+        z-index: 2;
     }
 
-    /* Selected State Styles */
-    .quiz-option-card input[type="radio"]:checked~.custom-radio {
-        border-color: var(--accent);
-        background-color: transparent;
-        /* Inner dot handles color */
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    .option-marker {
+        width: 24px;
+        height: 24px;
+        border: 2px solid var(--text-muted);
+        border-radius: 50%;
+        margin-right: 1.25rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        flex-shrink: 0;
     }
 
-    .quiz-option-card input[type="radio"]:checked~.custom-radio::after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+    .marker-circle {
         width: 10px;
         height: 10px;
+        background: var(--primary);
         border-radius: 50%;
-        background: var(--accent);
-        animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform: scale(0);
+        transition: transform 0.2s;
     }
 
-    .quiz-option-card input[type="radio"]:checked~.option-text {
+    .marker-check {
+        position: absolute;
+        color: white;
+        font-size: 1rem;
+        transform: scale(0);
+        transition: transform 0.2s;
+    }
+
+    .option-label {
+        font-size: 1.05rem;
+        color: var(--text-secondary);
+        transition: color 0.2s;
+    }
+
+    /* Glow Effect */
+    .option-glow {
+        position: absolute;
+        inset: -1px;
+        background: linear-gradient(90deg, var(--primary), #60a5fa);
+        border-radius: var(--radius-sm);
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 1;
+        filter: blur(8px);
+    }
+
+    /* Hover State */
+    .option-card:hover .option-content {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Checked State */
+    .option-card input:checked+.option-content {
+        background: rgba(15, 23, 42, 0.8);
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .option-card input:checked+.option-content .option-marker {
+        border-color: var(--primary);
+        background: var(--primary);
+    }
+
+    .option-card input:checked+.option-content .marker-check {
+        transform: scale(1);
+    }
+
+    /* Using check icon instead of inner circle for a cleaner look */
+    .option-card input:checked+.option-content .option-label {
         color: white;
         font-weight: 500;
     }
 
-    .quiz-option-card:has(input[type="radio"]:checked) {
-        border-color: var(--accent);
-        background: rgba(59, 130, 246, 0.05);
+    /* Subtle glow behind selected item */
+    .option-card input:checked~.option-glow {
+        opacity: 0.15;
     }
 
-    @keyframes popIn {
-        from {
-            transform: translate(-50%, -50%) scale(0);
+    /* Footer */
+    .quiz-footer {
+        padding: clamp(2rem, 5vw, 3rem);
+        text-align: center;
+        background: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-glow {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .hover-lift {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Mobile Tweaks */
+    @media (max-width: 640px) {
+        .question-text {
+            font-size: 1.1rem;
         }
 
-        to {
-            transform: translate(-50%, -50%) scale(1);
+        .option-content {
+            padding: 0.85rem 1rem;
+        }
+
+        .quiz-title {
+            font-size: 1.75rem;
         }
     }
 </style>

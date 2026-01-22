@@ -1,30 +1,45 @@
 {% extends "base.html" %}
 
+{% block title %}Edit Lesson - Admin{% endblock %}
+
 {% block content %}
-<div class="container" style="max-width: 600px; padding-top: 2rem;">
-    <div style="margin-bottom: 2rem;">
-        <a href="{{ url_for('admin_bp.course_content', course_id=lesson.module.course.id) }}"
-            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to Course</a>
+<div class="page-header">
+    <div>
+        <div style="margin-bottom: 0.5rem;">
+            <a href="{{ url_for('admin_bp.course_content', course_id=lesson.module.course.id) }}"
+                class="text-muted text-sm"
+                style="text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="iconify" data-icon="heroicons:arrow-left"></span> Back to Course
+            </a>
+        </div>
+        <h1 class="page-title gradient-text">Edit Lesson</h1>
     </div>
+</div>
 
-    <div class="glass-card">
-        <h2 style="margin-bottom: 1.5rem;">Edit Lesson</h2>
+<div class="glass-card" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+    <form action="{{ url_for('admin_bp.edit_lesson', lesson_id=lesson.id) }}" method="POST">
+        <div class="form-group">
+            <label>Lesson Title</label>
+            <input type="text" name="title" value="{{ lesson.title }}" required class="form-control">
+        </div>
 
-        <form action="{{ url_for('admin_bp.edit_lesson', lesson_id=lesson.id) }}" method="POST">
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label>Lesson Title</label>
-                <input type="text" name="title" class="form-control" value="{{ lesson.title }}" required
-                    style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
-            </div>
+        <div class="form-group">
+            <label>Video URL</label>
+            <input type="text" name="video_url" value="{{ lesson.video_url or '' }}"
+                placeholder="https://youtube.com/..." class="form-control">
+        </div>
 
-            <div class="form-group" style="margin-bottom: 2rem;">
-                <label>Video URL</label>
-                <input type="text" name="video_url" class="form-control" value="{{ lesson.video_url or '' }}"
-                    style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
-            </div>
+        <div class="form-group">
+            <label>Content (Optional)</label>
+            <textarea name="content" rows="6" class="form-control"
+                placeholder="Add text content here...">{{ lesson.content or '' }}</textarea>
+        </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Update Lesson</button>
-        </form>
-    </div>
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <a href="{{ url_for('admin_bp.course_content', course_id=lesson.module.course.id) }}" class="btn btn-ghost"
+                style="flex: 1; text-align: center;">Cancel</a>
+            <button type="submit" class="btn btn-primary" style="flex: 2;">Update Lesson</button>
+        </div>
+    </form>
 </div>
 {% endblock %}

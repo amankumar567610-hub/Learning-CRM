@@ -81,22 +81,12 @@ def update_profile():
     if 'profile_image' in request.files:
         file = request.files['profile_image']
         if file and file.filename != '' and allowed_file(file.filename):
+            filename = secure_filename(f"avatar_{current_user.id}_{file.filename}")
+            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             try:
-                # Cloudinary Upload
-                from app.utils import upload_file
-                image_url = upload_file(file, folder="avatars")
-                
-                if image_url:
-                    current_user.profile_image = image_url
-                    flash('Profile image updated!', 'success')
-                else:
-                     # Fallback to local (or error if keys missing in prod)
-                    filename = secure_filename(f"avatar_{current_user.id}_{file.filename}")
-                    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                    file.save(file_path)
-                    current_user.profile_image = filename # Store filename for local fallback
-                    flash('Profile image updated (Local)!', 'success')
-
+                file.save(file_path)
+                current_user.profile_image = filename
+                flash('Profile image updated!', 'success')
             except Exception as e:
                 print(f"Error saving avatar: {e}")
                 flash('Error uploading image.', 'danger')
@@ -116,6 +106,14 @@ def update_profile():
             current_user.password_hash = hashed_password
             current_user.plain_password = new_password # Update reference
             flash('Password changed successfully!', 'success')
+            
+    # 3. Handle Phone Number
+    phone_number = request.form.get('phone_number')
+    if phone_number:
+        current_user.phone_number = phone_number
+        # Flash success only if password wasn't the main action, or append to it
+        if not (current_password and new_password):
+            flash('Profile updated successfully!', 'success')
             
     db.session.commit()
     return redirect(url_for('main.student_dashboard'))
@@ -482,27 +480,15 @@ def upload_assignment(lesson_id):
         return redirect(url_for('main.lesson_player', lesson_id=lesson_id))
         
     if file and allowed_file(file.filename):
-        # Cloudinary Upload
-        from app.utils import upload_file
-        file_url = upload_file(file, folder="assignments")
-        
-        filename = secure_filename(f"{current_user.id}_{assignment.id}_{file.filename}") # Keep for local fallback name
-        
-        if file_url:
-             # Store URL
-             stored_path = file_url
-             print(f"DEBUG: Uploaded to Cloudinary: {stored_path}")
-        else:
-             # Fallback Local
-             file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-             try:
-                file.save(file_path)
-                stored_path = filename
-                print(f"DEBUG: Saved locally to {file_path}")
-             except Exception as e:
-                print(f"DEBUG: File save error: {e}")
-                flash('Error saving file.', 'danger')
-                return redirect(url_for('main.lesson_player', lesson_id=lesson_id))
+        filename = secure_filename(f"{current_user.id}_{assignment.id}_{file.filename}")
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        print(f"DEBUG: Saving file to {file_path}")
+        try:
+            file.save(file_path)
+        except Exception as e:
+            print(f"DEBUG: File save error: {e}")
+            flash('Error saving file.', 'danger')
+            return redirect(url_for('main.lesson_player', lesson_id=lesson_id))
         
         # Check if updating existing submission
         submission = Submission.query.filter_by(user_id=current_user.id, assignment_id=assignment.id).first()
@@ -514,7 +500,7 @@ def upload_assignment(lesson_id):
                  flash('Cannot resubmit. Assignment has already been graded.', 'warning')
                  return redirect(url_for('main.lesson_player', lesson_id=lesson_id))
 
-            submission.file_path = stored_path 
+            submission.file_path = filename 
             from datetime import datetime
             submission.submitted_at = datetime.utcnow()
             print("DEBUG: Updated existing submission")
@@ -522,7 +508,7 @@ def upload_assignment(lesson_id):
             submission = Submission(
                 user_id=current_user.id,
                 assignment_id=assignment.id,
-                file_path=stored_path
+                file_path=filename
             )
             db.session.add(submission)
             print("DEBUG: Created new submission")
@@ -555,18 +541,11 @@ def download_submission(submission_id):
     if current_user.role != 'admin' and current_user.id != submission.user_id:
         abort(403)
         
-    file_path_or_url = submission.file_path
-    
-    # Check if it's a Cloudinary URL
-    if file_path_or_url and file_path_or_url.startswith('http'):
-        return redirect(file_path_or_url)
-
-    # Fallback to local
     file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], submission.file_path)
     if os.path.exists(file_path):
         return send_file(file_path, as_attachment=True)
     else:
-        flash('File not found.', 'danger')
+        flash('File not found at path: ' + file_path, 'danger')
         return redirect(url_for('main.index'))
 
 @main.route('/assignment/<int:assignment_id>/resource')
@@ -586,10 +565,6 @@ def download_assignment_resource(assignment_id):
 
     if not assignment.resource_path:
         abort(404)
-        
-    file_path_or_url = assignment.resource_path
-    if file_path_or_url and file_path_or_url.startswith('http'):
-        return redirect(file_path_or_url)
         
     file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], assignment.resource_path)
     if os.path.exists(file_path):

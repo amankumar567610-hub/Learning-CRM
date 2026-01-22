@@ -1,67 +1,52 @@
 {% extends "base.html" %}
 
+{% block title %}All Quizzes - Admin{% endblock %}
 
 {% block content %}
-<div style="display: flex; min-height: 100vh;">
-    <!-- Sidebar -->
-    <div class="sidebar"
-        style="width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 2rem 1rem; position: fixed; height: 100vh; overflow-y: auto;">
-        <h3 style="margin-bottom: 2rem; padding-left: 1rem; font-size: 1.25rem;">Course Admin</h3>
-        <nav>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-                <li><a href="{{ url_for('main.dashboard') }}" class="sidebar-link">Dashboard</a></li>
-                <li><a href="{{ url_for('admin_bp.categories') }}" class="sidebar-link">Categories</a></li>
-                <li><a href="{{ url_for('admin_bp.courses') }}" class="sidebar-link">Courses</a></li>
-                <li><a href="{{ url_for('admin_bp.students') }}" class="sidebar-link">Students</a></li>
-                <li style="margin-top: 2rem;">
-                    <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color: var(--danger);">Logout</a>
-                </li>
-            </ul>
-        </nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="content-wrapper">
-        <!-- Flash Messages Area -->
-
-        <header style="margin-bottom: 2rem;">
-            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">All Quizzes</h1>
-            <p style="color: var(--text-secondary);">View and manage quizzes across all courses.</p>
-        </header>
-
-        {% if courses_with_quizzes %}
-        {% for item in courses_with_quizzes %}
-        <div class="glass-card" style="margin-bottom: 2rem;">
-            <h3 style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">{{
-                item.course.title }}</h3>
-            <ul style="list-style: none; padding: 0;">
-                {% for quiz in item.quizzes %}
-                <li
-                    style="background: var(--bg-color); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h4 style="margin: 0; margin-bottom: 0.3rem;">{{ quiz.title }}</h4>
-                            <span style="font-size: 0.85rem; color: var(--text-secondary);">Lesson: {{ quiz.lesson.title
-                                }} ({{ quiz.questions|length }} Questions)</span>
-                        </div>
-                        <a href="{{ url_for('admin_bp.add_quiz', lesson_id=quiz.lesson.id) }}" class="btn btn-sm"
-                            style="background: transparent; border: 1px solid var(--border); font-size: 0.9rem;">
-                            Edit Quiz
-                        </a>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endfor %}
-        {% else %}
-        <div class="glass-card" style="text-align: center; padding: 3rem;">
-            <h3 style="color: var(--text-secondary);">No quizzes found.</h3>
-            <p>Add quizzes to lessons via the Course Management page.</p>
-            <a href="{{ url_for('admin_bp.courses') }}" class="btn btn-primary" style="margin-top: 1rem;">Go to
-                Courses</a>
-        </div>
-        {% endif %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title gradient-text">All Quizzes</h1>
+        <p class="text-muted">Manage quizzes across all courses.</p>
     </div>
 </div>
+
+{% for item in courses_with_quizzes %}
+<div style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem; border-left: 3px solid var(--primary); padding-left: 1rem; font-size: 1.2rem;">{{
+        item.course.title }}</h3>
+
+    <div class="glass-card" style="padding: 0; overflow: hidden;">
+        <div class="list-group">
+            {% for quiz in item.quizzes %}
+            <div class="list-item"
+                style="padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div
+                        style="width: 40px; height: 40px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                        <span class="iconify" data-icon="heroicons:question-mark-circle"></span>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 1.05rem;">{{ quiz.title }}</h4>
+                        <span class="text-xs text-muted">{{ quiz.lesson.title }} • {{ quiz.questions|length }}
+                            Questions</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <a href="{{ url_for('admin_bp.add_quiz', lesson_id=quiz.lesson.id) }}"
+                        class="btn btn-sm btn-primary">
+                        <span class="iconify" data-icon="heroicons:pencil-square"></span> Edit
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="glass-card text-center" style="padding: 4rem;">
+    <p class="text-muted">No quizzes created yet.</p>
+    <a href="{{ url_for('admin_bp.courses') }}" class="btn btn-primary">Go to Courses</a>
+</div>
+{% endfor %}
+
 {% endblock %}

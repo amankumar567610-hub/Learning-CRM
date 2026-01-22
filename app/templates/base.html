@@ -6,62 +6,719 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Course Platform{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='4.0') }}">
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
 </head>
 
 <body>
+
     <!-- Toast Notifications (Global) -->
-    <div class="toast-container">
+    <div class="toast-container" id="toastContainer">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
+        {% set icon_map = {
+        'success': 'heroicons:check-circle',
+        'danger': 'heroicons:x-circle',
+        'warning': 'heroicons:exclamation-triangle',
+        'info': 'heroicons:information-circle'
+        } %}
+        {% set icon = icon_map.get(category, 'heroicons:information-circle') %}
+        <!-- Fallback for 'error' category if used -->
+        {% if category == 'error' %}{% set icon = 'heroicons:x-circle' %}{% endif %}
+
         <div class="toast-alert alert-{{ category }}">
-            <span>{{ message }}</span>
-            <button
-                onclick="this.parentElement.classList.add('fade-out'); setTimeout(() => this.parentElement.remove(), 400);"
-                style="background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer; font-size:1.5rem; line-height:1; padding:0;">
-                &times;
+            <div class="toast-icon">
+                <span class="iconify" data-icon="{{ icon }}" style="font-size: 1.5rem;"></span>
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">{{ category }}</div>
+                <div class="toast-message">{{ message }}</div>
+            </div>
+            <button onclick="dismissToast(this.closest('.toast-alert'))" class="toast-close">
+                <span class="iconify" data-icon="heroicons:x-mark" style="font-size: 1.25rem;"></span>
             </button>
+            <div class="toast-progress">
+                <div class="toast-progress-bar"></div>
+            </div>
         </div>
         {% endfor %}
         {% endif %}
         {% endwith %}
     </div>
 
-    <!-- Auto-Dismiss Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const toasts = document.querySelectorAll('.toast-alert');
-            if (toasts.length > 0) {
-                // Auto dismiss after 3 seconds
-                setTimeout(() => {
-                    toasts.forEach(toast => {
-                        toast.classList.add('fade-out');
-                        toast.addEventListener('animationend', () => toast.remove());
-                    });
-                }, 3000);
-            }
-        });
-    </script>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        {% if current_user.is_authenticated %}
+        <aside class="app-sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo">
+                    <span class="iconify" data-icon="heroicons:academic-cap" style="color: var(--primary);"></span>
+                    <span>LMS Portal</span>
+                </div>
+            </div>
 
-    <div class="main-content">
-        <!-- Flash messages block preserved for backward compatibility but empty by default -->
-        {% block flash_messages %}{% endblock %}
+            <nav>
+                <ul class="nav-links">
+                    {% if current_user.role == 'admin' %}
+                    <li>
+                        <a href="{{ url_for('main.dashboard') }}"
+                            class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                            <span class="iconify" data-icon="heroicons:squares-2x2"></span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin_bp.categories') }}"
+                            class="nav-link {% if request.endpoint == 'admin_bp.categories' %}active{% endif %}">
+                            <span class="iconify" data-icon="heroicons:tag"></span>
+                            Categories
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin_bp.courses') }}"
+                            class="nav-link {% if request.endpoint == 'admin_bp.courses' %}active{% endif %}">
+                            <span class="iconify" data-icon="heroicons:academic-cap"></span>
+                            Courses
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin_bp.students') }}"
+                            class="nav-link {% if request.endpoint == 'admin_bp.students' %}active{% endif %}">
+                            <span class="iconify" data-icon="heroicons:users"></span>
+                            Students
+                        </a>
+                    </li>
+                    {% else %}
+                    <!-- Student Links -->
+                    <li>
+                        <a href="{{ url_for('main.student_dashboard') }}"
+                            class="nav-link {% if request.endpoint == 'main.student_dashboard' %}active{% endif %}">
+                            <span class="iconify" data-icon="heroicons:home"></span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('main.student_assignments') }}"
+                            class="nav-link {% if request.endpoint == 'main.student_assignments' %}active{% endif %}">
+                            <span class="iconify" data-icon="heroicons:document-text"></span>
+                            My Assignments
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('main.student_quizzes') }}"
+                            class="nav-link {% if request.endpoint == 'main.student_quizzes' %}active{% endif %}">
+                            <span class="iconify" data-icon="heroicons:clipboard-document-check"></span>
+                            My Quizzes
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" onclick="openProfileModal(); return false;" class="nav-link">
+                            <span class="iconify" data-icon="heroicons:user-circle"></span>
+                            My Profile
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
 
-        {% block content %}{% endblock %}
+            <div class="sidebar-footer">
+                <a href="{{ url_for('auth.logout') }}" class="nav-link danger">
+                    <span class="iconify" data-icon="heroicons:arrow-right-start-on-rectangle"></span>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Mobile Overlay -->
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="app-main" {% if not current_user.is_authenticated %}style="margin-left: 0; width: 100%;" {% endif
+            %}>
+            <!-- Mobile Toggle Button (Visible only on mobile) -->
+            {% if current_user.is_authenticated %}
+            <div class="mobile-header">
+                <button class="btn btn-icon-only" onclick="toggleSidebar()"
+                    style="background: var(--bg-surface); border: 1px solid var(--border);">
+                    <span class="iconify" data-icon="heroicons:bars-3" style="font-size: 1.5rem;"></span>
+                </button>
+                <span style="font-weight: 600; font-size: 1.1rem;">LMS Portal</span>
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
     </div>
 
-    <!-- Mobile Sidebar Overlay (Global) -->
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <!-- Global Profile Modal (Structure Fix) -->
+    <div class="modal-overlay" id="profileModal" onclick="closeProfileModal()">
+        <div class="modal-content profile-card-rebuild" onclick="event.stopPropagation()">
 
+            <form action="{{ url_for('main.update_profile') }}" method="POST" enctype="multipart/form-data"
+                class="profile-form-wrapper">
+
+                <!-- Banner (Fixed Top) -->
+                <div class="profile-banner">
+                    <button type="button" onclick="closeProfileModal()" class="btn-close-modal">
+                        <span class="iconify" data-icon="heroicons:x-mark"></span>
+                    </button>
+                    <!-- Gradient Overlay -->
+                    <div class="banner-overlay"></div>
+                </div>
+
+                <!-- Header (Static, Overlaps Banner) -->
+                <div class="profile-header-static">
+                    <div class="avatar-container" onclick="document.getElementById('profile_image_input').click()">
+                        {% if current_user.is_authenticated %}
+                        {% if current_user.profile_image and current_user.profile_image != 'default_avatar.png' %}
+                        <img id="avatarPreview"
+                            src="{{ url_for('static', filename='uploads/' + current_user.profile_image) }}"
+                            class="avatar-image">
+                        {% else %}
+                        <div id="avatarInitialPlaceholder" class="avatar-placeholder">
+                            {{ current_user.full_name[:1]|upper }}
+                        </div>
+                        <img id="avatarPreview" src="" class="avatar-image" style="display: none;">
+                        {% endif %}
+                        {% endif %}
+                        <div class="avatar-edit-overlay">
+                            <span class="iconify" data-icon="heroicons:camera"></span>
+                        </div>
+                    </div>
+                    <h2 class="profile-name">
+                        {% if current_user.is_authenticated %}
+                        {{ current_user.full_name }}
+                        {% else %}
+                        Edit Profile
+                        {% endif %}
+                    </h2>
+                    <span class="profile-role">Student Account</span>
+                </div>
+
+                <input type="file" name="profile_image" id="profile_image_input" hidden accept="image/*"
+                    onchange="previewAvatar(this)">
+
+                <!-- Scrollable Body (Inputs Only) -->
+                <div class="profile-scroll-area">
+                    {% if current_user.is_authenticated %}
+                    <div class="profile-form-grid">
+
+                        <!-- Contact Info Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">Contact Information</h3>
+
+                            <!-- Email Field (Read Only) -->
+                            <div class="input-group-premium">
+                                <div class="icon-box">
+                                    <span class="iconify" data-icon="heroicons:at-symbol"></span>
+                                </div>
+                                <div class="input-area">
+                                    <label>Email Address</label>
+                                    <input type="text" value="{{ current_user.email }}" readonly class="locked-input">
+                                </div>
+                            </div>
+
+                            <!-- Phone Field -->
+                            <div class="input-group-premium">
+                                <div class="icon-box">
+                                    <span class="iconify" data-icon="heroicons:phone"></span>
+                                </div>
+                                <div class="input-area">
+                                    <label>Phone Number</label>
+                                    <input type="tel" name="phone_number"
+                                        value="{{ current_user.phone_number if current_user.phone_number else '' }}"
+                                        placeholder="+1 234 567 890" pattern="[0-9]*" inputmode="numeric">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">Security</h3>
+
+                            <!-- Current Password -->
+                            <div class="input-group-premium">
+                                <div class="icon-box">
+                                    <span class="iconify" data-icon="heroicons:lock-closed"></span>
+                                </div>
+                                <div class="input-area">
+                                    <label>Current Password</label>
+                                    <input type="password" name="current_password" placeholder="••••••••"
+                                        autocomplete="new-password">
+                                </div>
+                            </div>
+
+                            <!-- New Password Grid -->
+                            <div class="password-grid">
+                                <div class="input-group-premium compact">
+                                    <div class="input-area no-pad">
+                                        <label>New Password</label>
+                                        <input type="password" name="new_password" placeholder="New pass"
+                                            autocomplete="new-password">
+                                    </div>
+                                </div>
+                                <div class="input-group-premium compact">
+                                    <div class="input-area no-pad">
+                                        <label>Confirm</label>
+                                        <input type="password" name="confirm_password" placeholder="Verify"
+                                            autocomplete="new-password">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Button -->
+                        <button type="submit" class="btn-save-premium">
+                            <span>Save Changes</span>
+                            <span class="iconify" data-icon="heroicons:arrow-right" style="font-size: 1.1rem;"></span>
+                        </button>
+
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* --- REBUILT PROFILE MODAL STYLES (Ultra Premium + Structure Fix) --- */
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .profile-card-rebuild {
+            width: 100%;
+            max-width: 420px;
+            background: #0b1120;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            /* Viewport limit */
+            position: relative;
+        }
+
+        /* Wrapper to handle form taking full height but allowing flex children */
+        .profile-form-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* Banner */
+        .profile-banner {
+            height: 140px;
+            width: 100%;
+            background: linear-gradient(135deg, #4338ca 0%, #7c3aed 50%, #db2777 100%);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .banner-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to top, #0b1120 10%, transparent);
+            pointer-events: none;
+        }
+
+        .btn-close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+            z-index: 50;
+            /* Top most */
+        }
+
+        .btn-close-modal:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        /* Header (Static - No Scrolling) */
+        .profile-header-static {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: -75px;
+            /* Pull up over banner */
+            position: relative;
+            z-index: 20;
+            /* Above banner */
+            flex-shrink: 0;
+            padding-bottom: 2rem;
+            background: transparent;
+        }
+
+        .avatar-container {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 4px solid #0b1120;
+            padding: 3px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        }
+
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            background: #0b1120;
+            border: 4px solid #0b1120;
+            display: block;
+        }
+
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1e293b;
+            border: 4px solid #0b1120;
+            color: #94a3b8;
+            font-size: 3.5rem;
+            font-weight: 700;
+        }
+
+        .avatar-edit-overlay {
+            position: absolute;
+            inset: 3px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            backdrop-filter: blur(2px);
+        }
+
+        .avatar-container:hover .avatar-edit-overlay {
+            opacity: 1;
+        }
+
+        .profile-name {
+            margin: 1rem 0 0.3rem;
+            color: white;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .profile-role {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.15));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: #c4b5fd;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+        }
+
+        /* Scroll Area - The only thing that scrolls */
+        .profile-scroll-area {
+            flex: 1;
+            /* Takes remaining height */
+            overflow-y: auto;
+            /* Internal scroll */
+            padding: 0 1.75rem 2.5rem;
+            /* Padding internal */
+        }
+
+        /* Form Layout */
+        .profile-form-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .section-title {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-weight: 700;
+            margin-bottom: 0.1rem;
+            padding-left: 0.5rem;
+        }
+
+        /* Input Groups */
+        .input-group-premium {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 18px;
+            display: flex;
+            align-items: stretch;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-group-premium:focus-within {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .icon-box {
+            width: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+            transition: color 0.3s;
+        }
+
+        .input-group-premium:focus-within .icon-box {
+            color: #a78bfa;
+            text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+        }
+
+        .input-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0.8rem 1.25rem 0.8rem 0;
+            min-width: 0;
+        }
+
+        .input-area.no-pad {
+            padding: 1rem 1.25rem;
+        }
+
+        .input-area label {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-bottom: 4px;
+            display: block;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .input-group-premium:focus-within .input-area label {
+            color: #94a3b8;
+        }
+
+        .input-area input {
+            background: transparent;
+            border: none;
+            color: #f1f5f9;
+            font-size: 1rem;
+            width: 100%;
+            padding: 0;
+            outline: none;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+
+        .input-area input::placeholder {
+            color: #334155;
+        }
+
+        .locked-input {
+            color: #475569 !important;
+            cursor: default;
+        }
+
+        .password-grid {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-save-premium {
+            width: 100%;
+            padding: 1.15rem;
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #6366f1, #d946ef);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.5);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            letter-spacing: 0.02em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-save-premium::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-save-premium:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 35px -8px rgba(217, 70, 239, 0.6);
+        }
+
+        .btn-save-premium:hover::before {
+            left: 100%;
+        }
+
+        @media (max-width: 640px) {
+            .profile-card-rebuild {
+                max-width: 100%;
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+                border: none;
+            }
+
+            .modal-overlay {
+                padding: 0;
+            }
+
+            .profile-scroll-area {
+                padding-bottom: 7rem;
+            }
+
+            .btn-save-premium {
+                position: fixed;
+                bottom: 2rem;
+                left: 1.5rem;
+                right: 1.5rem;
+                width: auto;
+                margin: 0;
+                z-index: 50;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            }
+        }
+    </style>
+
+    <!-- Global Scripts -->
     <script>
+        // Profile Modal Logic
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.add('open');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('open');
+        }
+
+        document.getElementById('profileModal').addEventListener('click', function (e) {
+            if (e.target === this) closeProfileModal();
+        });
+
+        function previewAvatar(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('avatarPreview');
+                    const initial = document.getElementById('avatarInitial');
+
+                    if (img && initial) {
+                        img.src = e.target.result;
+                        img.style.display = 'block';
+                        initial.style.display = 'none';
+                    } else if (img) {
+                        img.src = e.target.result;
+                        img.style.display = 'block';
+                    }
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Toast Auto-Dismiss
+        document.addEventListener('DOMContentLoaded', () => {
+            const toasts = document.querySelectorAll('.toast-alert');
+            // Auto dismiss after 4 seconds (matching CSS animation)
+            setTimeout(() => {
+                toasts.forEach(t => dismissToast(t));
+            }, 4000);
+        });
+
+        function dismissToast(element) {
+            element.classList.add('hiding');
+            element.addEventListener('animationend', () => {
+                element.remove();
+            });
+        }
+
+        // Mobile Sidebar Toggle
         function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar) {
-                sidebar.classList.toggle('show');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+
+            sidebar.classList.toggle('show');
+            if (overlay) {
+                overlay.classList.toggle('show');
             }
         }
     </script>
+
+    {% block scripts %}{% endblock %}
 </body>
 
 </html>

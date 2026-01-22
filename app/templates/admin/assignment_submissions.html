@@ -1,65 +1,71 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="container" style="max-width: 1000px; padding-top: 2rem;">
-    <div style="margin-bottom: 2rem;">
-        <a href="{{ url_for('admin_bp.course_content', course_id=assignment.lesson.module.course.id) }}"
-            style="color: var(--text-secondary); text-decoration: none;">&larr; Back to Course</a>
-    </div>
+{% block title %}Submissions - Admin{% endblock %}
 
-    <div class="glass-card">
-        <h2 style="margin-bottom: 0.5rem;">Submissions</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 2rem;">
-            Assignment: <strong>{{ assignment.lesson.title }}</strong> &bull; Total Submissions: {{
+{% block content %}
+<div class="page-header">
+    <div>
+        <div style="margin-bottom: 0.5rem;">
+            <a href="{{ url_for('admin_bp.course_content', course_id=assignment.lesson.module.course.id) }}"
+                class="text-muted text-sm"
+                style="text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="iconify" data-icon="heroicons:arrow-left"></span> Back to Course
+            </a>
+        </div>
+        <h1 class="page-title gradient-text">Submissions</h1>
+        <p class="text-muted">
+            Assignment: <strong style="color: white;">{{ assignment.lesson.title }}</strong> &bull; Total: {{
             assignment.submissions|length }}
         </p>
+    </div>
+</div>
 
-        {% if assignment.submissions %}
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="border-bottom: 1px solid var(--border); text-align: left;">
-                    <th style="padding: 1rem; color: var(--text-secondary);">Student</th>
-                    <th style="padding: 1rem; color: var(--text-secondary);">Submitted At</th>
-                    <th style="padding: 1rem; color: var(--text-secondary);">File</th>
-                    <th style="padding: 1rem; color: var(--text-secondary);">Grade</th>
-                    <th style="padding: 1rem; color: var(--text-secondary);">Action</th>
+<div class="glass-card" style="padding: 0; overflow: hidden;">
+    {% if assignment.submissions %}
+    <div class="table-responsive">
+        <table class="table" style="width: 100%; border-collapse: collapse;">
+            <thead style="background: rgba(255,255,255,0.02);">
+                <tr>
+                    <th style="padding: 1rem 1.5rem; text-align: left;">Student</th>
+                    <th style="padding: 1rem 1.5rem; text-align: left;">Submitted At</th>
+                    <th style="padding: 1rem 1.5rem; text-align: left;">File</th>
+                    <th style="padding: 1rem 1.5rem; text-align: left;">Grade</th>
+                    <th style="padding: 1rem 1.5rem; text-align: right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for submission in assignment.submissions %}
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <td style="padding: 1rem;">
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;">
+                    <td style="padding: 1rem 1.5rem;">
                         <div style="font-weight: 500;">{{ submission.student.full_name }}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ submission.student.email }}
-                        </div>
+                        <div class="text-xs text-muted">{{ submission.student.email }}</div>
                     </td>
-                    <td style="padding: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                    <td style="padding: 1rem 1.5rem;" class="text-muted text-sm">
                         {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}
                     </td>
-                    <td style="padding: 1rem;">
+                    <td style="padding: 1rem 1.5rem;">
                         <a href="{{ url_for('main.download_submission', submission_id=submission.id) }}" target="_blank"
-                            style="color: var(--accent); text-decoration: none;">Download</a>
+                            class="btn btn-sm" style="color: var(--primary); border-color: rgba(59, 130, 246, 0.3);">
+                            <span class="iconify" data-icon="heroicons:arrow-down-tray"></span> Download
+                        </a>
                     </td>
-                    <td style="padding: 1rem;">
+                    <td style="padding: 1rem 1.5rem;">
                         {% if submission.grade is not none %}
-                        <span style="color: var(--success); font-weight: bold;">{{ submission.grade }} / {{
+                        <span class="badge badge-success" style="font-size: 0.9rem;">{{ submission.grade }} / {{
                             assignment.max_score }}</span>
                         {% else %}
-                        <span style="color: var(--warning);">Pending</span>
+                        <span class="badge badge-warning">Pending</span>
                         {% endif %}
                     </td>
-                    <td style="padding: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                    <td style="padding: 1rem 1.5rem; text-align: right; white-space: nowrap;">
                         <button
-                            onclick="openGradeModal({{ submission.id }}, '{{ submission.grade or '' }}', '{{ submission.feedback or '' }}')"
-                            class="btn btn-sm"
-                            style="border: 1px solid var(--success); color: var(--success); background: rgba(0, 200, 83, 0.1);">
-                            Accept & Grade
+                            onclick="openGradeModal({{ submission.id }}, '{{ submission.grade or '' }}', `{{ submission.feedback or '' }}`)"
+                            class="btn btn-sm btn-primary">
+                            Grade
                         </button>
-
                         <button
                             onclick="openRejectModal('{{ url_for('main.reject_assignment', submission_id=submission.id) }}')"
-                            class="btn btn-sm"
-                            style="background: var(--danger); color: white; border: 1px solid var(--danger); padding: 0.4rem 1rem;">
+                            class="btn btn-sm btn-danger">
                             Reject
                         </button>
                     </td>
@@ -67,95 +73,75 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% else %}
-        <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-            No submissions yet.
-        </div>
-        {% endif %}
     </div>
+    {% else %}
+    <div class="text-center text-muted" style="padding: 4rem;">
+        <span class="iconify" data-icon="heroicons:inbox"
+            style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></span>
+        <p>No submissions yet.</p>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Grade Modal -->
-<div id="gradeModal"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-    <div class="glass-card" style="width: 400px; max-width: 90%;">
+<div id="gradeModal" class="modal"
+    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center;">
+    <div class="glass-card" style="width: 400px; padding: 2rem;">
         <h3 style="margin-top: 0;">Grade Submission</h3>
         <form id="gradeForm" method="POST">
-            <div class="form-group" style="margin-bottom: 1rem;">
+            <div class="form-group">
                 <label>Score (Max: {{ assignment.max_score }})</label>
                 <input type="number" name="grade" id="gradeInput" max="{{ assignment.max_score }}" required
-                    class="form-control"
-                    style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                    class="form-control">
             </div>
-            <div class="form-group" style="margin-bottom: 2rem;">
+            <div class="form-group">
                 <label>Feedback</label>
-                <textarea name="feedback" id="feedbackInput" rows="4" class="form-control" placeholder="Add comments..."
-                    style="width: 100%; padding: 0.8rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;"></textarea>
+                <textarea name="feedback" id="feedbackInput" rows="4" class="form-control"
+                    placeholder="Comments for the student..."></textarea>
             </div>
-            <div style="display: flex; gap: 1rem;">
-                <button type="button" onclick="document.getElementById('gradeModal').style.display='none'" class="btn"
-                    style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary);">Cancel</button>
-                <button type="submit" class="btn btn-primary" style="flex: 1;">Save Grade</button>
+            <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+                <button type="button" class="btn btn-ghost" onclick="closeModals()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Grade</button>
             </div>
         </form>
     </div>
 </div>
 
-<script>
-    function openGradeModal(id, grade, feedback) {
-        const modal = document.getElementById('gradeModal');
-        const form = document.getElementById('gradeForm');
-        const gradeInput = document.getElementById('gradeInput');
-        const feedbackInput = document.getElementById('feedbackInput');
-
-        form.action = `/admin/submission/${id}/grade`;
-        gradeInput.value = grade;
-        feedbackInput.value = feedback;
-
-        modal.style.display = 'flex';
-    }
-
-    // Modal Close Logic
-    window.onclick = function (event) {
-        if (event.target == document.getElementById('gradeModal')) {
-            document.getElementById('gradeModal').style.display = "none";
-        }
-        if (event.target == document.getElementById('rejectModal')) {
-            document.getElementById('rejectModal').style.display = "none";
-        }
-    }
-
-    function openRejectModal(url) {
-        const modal = document.getElementById('rejectModal');
-        const form = document.getElementById('rejectForm');
-
-        form.action = url;
-        modal.style.display = 'flex';
-    }
-</script>
-
-<!-- Reject Confirmation Modal -->
-<div id="rejectModal"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1100; justify-content: center; align-items: center;">
-    <div class="glass-card" style="width: 400px; max-width: 90%; text-align: center;">
-        <div style="margin-bottom: 1.5rem;">
-            <div
-                style="width: 60px; height: 60px; background: rgba(220, 38, 38, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
-                <span style="color: var(--error); font-size: 2rem;">&times;</span>
-            </div>
-            <h3 style="margin: 0; margin-bottom: 0.5rem; color: white;">Confirm Rejection</h3>
-            <p style="color: var(--text-secondary); margin: 0;">
-                Are you sure you want to reject this assignment? The student will be notified and asked to resubmit.
-            </p>
-        </div>
-
-        <div style="display: flex; gap: 1rem;">
-            <button onclick="document.getElementById('rejectModal').style.display='none'" class="btn"
-                style="flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text-secondary);">Cancel</button>
-            <form id="rejectForm" method="POST" style="flex: 1; margin: 0;">
-                <button type="submit" class="btn btn-danger" style="width: 100%;">Reject</button>
+<!-- Reject Modal -->
+<div id="rejectModal" class="modal"
+    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center;">
+    <div class="glass-card" style="width: 400px; padding: 2rem; border-color: var(--danger);">
+        <h3 class="text-danger" style="margin-top: 0;">Confirm Rejection</h3>
+        <p class="text-muted">Are you sure? The student will be notified and asked to resubmit.</p>
+        <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+            <button type="button" class="btn btn-ghost" onclick="closeModals()">Cancel</button>
+            <form id="rejectForm" method="POST" style="margin:0;">
+                <button type="submit" class="btn btn-danger">Reject</button>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    function closeModals() {
+        document.querySelectorAll('.modal').forEach(el => el.style.display = 'none');
+    }
+
+    function openGradeModal(id, grade, feedback) {
+        const form = document.getElementById('gradeForm');
+        form.action = `/admin/submission/${id}/grade`;
+        document.getElementById('gradeInput').value = grade != 'None' ? grade : '';
+        document.getElementById('feedbackInput').value = feedback != 'None' ? feedback : '';
+        document.getElementById('gradeModal').style.display = 'flex';
+    }
+
+    function openRejectModal(url) {
+        document.getElementById('rejectForm').action = url;
+        document.getElementById('rejectModal').style.display = 'flex';
+    }
+
+    window.onclick = function (e) {
+        if (e.target.classList.contains('modal')) closeModals();
+    }
+</script>
 {% endblock %}

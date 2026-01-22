@@ -2,7 +2,6 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
-import os
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -10,14 +9,10 @@ login_manager = LoginManager()
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-this-in-prod')
+    app.config['SECRET_KEY'] = 'dev-secret-key-change-this-in-prod'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
     
-    db_uri = os.environ.get('DATABASE_URL', 'sqlite:///site.db')
-    if db_uri and db_uri.startswith("postgres://"):
-        db_uri = db_uri.replace("postgres://", "postgresql://", 1)
-        
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
-    
+    import os
     app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'app/static/uploads')
     # Ensure upload folder exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

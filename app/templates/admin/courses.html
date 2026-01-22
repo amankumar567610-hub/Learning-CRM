@@ -1,175 +1,257 @@
 {% extends "base.html" %}
 
+{% block title %}Manage Courses - Admin{% endblock %}
 
 {% block content %}
-<div style="display: flex; min-height: 100vh;">
-    <!-- Sidebar -->
-    <div class="sidebar"
-        style="width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 2rem 1rem; position: fixed; height: 100vh; overflow-y: auto;">
-        <h3 style="margin-bottom: 2rem; padding-left: 1rem; font-size: 1.25rem;">Course Admin</h3>
-        <nav>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-                <li><a href="{{ url_for('main.dashboard') }}" class="sidebar-link">Dashboard</a></li>
-                <li><a href="{{ url_for('admin_bp.categories') }}" class="sidebar-link">Categories</a></li>
-                <li><a href="{{ url_for('admin_bp.courses') }}" class="sidebar-link active">Courses</a></li>
-                <li><a href="{{ url_for('admin_bp.students') }}" class="sidebar-link">Students</a></li>
-                <li style="margin-top: 2rem;">
-                    <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color: var(--danger);">Logout</a>
-                </li>
-            </ul>
-        </nav>
+<div class="modern-page-header">
+    <div class="header-content">
+        <h1 class="header-title">Manage Courses</h1>
+        <p class="header-subtitle">Create and manage your video courses.</p>
     </div>
+    <div class="header-actions">
+        <!-- Future: Add 'Create New Course' button here if we want to move it out of the sidebar -->
+    </div>
+</div>
 
-    <!-- Main Content -->
-    <div class="content-wrapper">
-
-        <header style="margin-bottom: 3rem;">
-            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Manage Courses</h1>
-            <p style="color: var(--text-secondary);">Create and manage your video courses.</p>
-        </header>
-
-        <!-- Create Course Form -->
-        <div class="glass-card" style="margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-            <h3
-                style="margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem;">
-                Create New Course</h3>
+<div class="course-grid-layout">
+    <!-- Create Course Form -->
+    <div class="glass-card course-form-sidebar">
+        <div class="card-header" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 1.5rem;">
+            <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="iconify" data-icon="heroicons:plus-circle" style="color: var(--primary);"></span>
+                Create New Course
+            </h3>
+        </div>
+        <div class="card-body">
             <form method="POST" action="" enctype="multipart/form-data">
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label for="title"
-                        style="display: block; margin-bottom: 0.4rem; color: var(--text-secondary); font-size: 0.9rem;">Course
-                        Title</label>
-                    <input type="text" name="title" id="title" required
-                        style="width: 100%; padding: 0.6rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                <div class="form-group">
+                    <label for="title">Course Title</label>
+                    <input type="text" name="title" id="title" class="form-control" required
+                        placeholder="e.g. Advanced Python Masterclass">
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label for="category_id"
-                        style="display: block; margin-bottom: 0.4rem; color: var(--text-secondary); font-size: 0.9rem;">Category</label>
-                    <select name="category_id" id="category_id" required
-                        style="width: 100%; padding: 0.6rem; background: var(--bg-color); border: 1px solid var(--border); color: var(--text-primary); border-radius: 6px; appearance: none;">
+                <div class="form-group">
+                    <label for="category_id">Category</label>
+                    <select name="category_id" id="category_id" required style="display: none;">
                         <option value="" disabled selected>Select a Category</option>
                         {% for category in categories %}
                         <option value="{{ category.id }}">{{ category.name }}</option>
                         {% endfor %}
                     </select>
-                </div>
 
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label for="thumbnail_file"
-                        style="display: block; margin-bottom: 0.4rem; color: var(--text-secondary); font-size: 0.9rem;">Thumbnail
-                        Image (Upload)</label>
-                    <input type="file" name="thumbnail_file" id="thumbnail_file" accept="image/*"
-                        style="width: 100%; padding: 0.6rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
-                </div>
-
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label for="thumbnail_url"
-                        style="display: block; margin-bottom: 0.4rem; color: var(--text-secondary); font-size: 0.9rem;">OR
-                        Thumbnail URL</label>
-                    <input type="text" name="thumbnail_url" id="thumbnail_url" placeholder="https://..."
-                        style="width: 100%; padding: 0.6rem; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 6px;">
-                </div>
-
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label for="description"
-                        style="display: block; margin-bottom: 0.4rem; color: var(--text-secondary); font-size: 0.9rem;">Description</label>
-                    <textarea name="description" id="description" rows="3" required
-                        style="width: 100%; padding: 0.6rem; background: var(--bg-color); border: 1px solid var(--border); color: var(--text-primary); border-radius: 6px; font-family: inherit; resize: vertical;"></textarea>
-                </div>
-
-                <button type="submit" class="btn btn-primary" style="padding: 0.8rem 2rem;">Create Course</button>
-            </form>
-        </div>
-
-        <!-- Course List -->
-        <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Your Courses</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
-            {% for course in courses %}
-            <div class="glass-card"
-                style="padding: 0; overflow: hidden; display: flex; flex-direction: column; position: relative;">
-                <button
-                    onclick="openDeleteCourseModal('{{ url_for('admin_bp.delete_course', course_id=course.id) }}', '{{ course.title | replace("
-                    \'", "\\\'" ) | replace('"', '&quot;' ) }}')" class="delete-course-btn" title="Delete Course">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
-                {% if course.thumbnail_url %}
-                {% if course.thumbnail_url.startswith('http') %}
-                <img src="{{ course.thumbnail_url }}" alt="{{ course.title }}"
-                    style="width: 100%; height: 180px; object-fit: cover;">
-                {% else %}
-                <img src="{{ url_for('static', filename='uploads/' + course.thumbnail_url) }}" alt="{{ course.title }}"
-                    style="width: 100%; height: 180px; object-fit: cover;">
-                {% endif %}
-                {% else %}
-                <div
-                    style="width: 100%; height: 180px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1.5rem;">
-                    {{ course.title[:2] }}
-                </div>
-                {% endif %}
-                <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
-                    <span
-                        style="font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 0.5rem;">{{
-                        course.category.name }}</span>
-                    <h3 style="margin: 0 0 1rem; font-size: 1.25rem; line-height: 1.4;">{{ course.title }}</h3>
-                    <p
-                        style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1.5rem; flex: 1;">
-                        {{ course.description }}</p>
-                    <div style="margin-top: auto;">
-                        <a href="{{ url_for('admin_bp.course_content', course_id=course.id) }}" class="btn btn-block"
-                            style="background: var(--bg-color); border: 1px solid var(--border); color: white; padding: 0.8rem; text-align: center; text-decoration: none; display: block; transition: all 0.2s; font-weight: 500;">
-                            Manage Content
-                        </a>
+                    <!-- Custom Dropdown Trigger -->
+                    <div class="custom-select-wrapper" id="categoryDropdown">
+                        <div class="custom-select-trigger">
+                            <span id="categoryTriggerText">Select a Category</span>
+                            <span class="iconify" data-icon="heroicons:chevron-down"
+                                style="transition: transform 0.2s;"></span>
+                        </div>
+                        <div class="custom-options">
+                            {% for category in categories %}
+                            <div class="custom-option" data-value="{{ category.id }}">{{ category.name }}</div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
-            </div>
-            {% else %}
-            <div
-                style="grid-column: 1 / -1; text-align: center; padding: 4rem; color: var(--text-secondary); background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--border);">
-                <p>No courses created yet.</p>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const wrapper = document.getElementById('categoryDropdown');
+                        const trigger = wrapper.querySelector('.custom-select-trigger');
+                        const options = wrapper.querySelectorAll('.custom-option');
+                        const nativeSelect = document.getElementById('category_id');
+                        const triggerText = document.getElementById('categoryTriggerText');
+                        const icon = trigger.querySelector('.iconify');
+
+                        // Toggle Dropdown
+                        trigger.addEventListener('click', function (e) {
+                            wrapper.classList.toggle('open');
+                            icon.style.transform = wrapper.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0)';
+                            e.stopPropagation(); // Prevent closing immediately
+                        });
+
+                        // Select Option
+                        options.forEach(option => {
+                            option.addEventListener('click', function () {
+                                // Update UI
+                                triggerText.textContent = this.textContent;
+                                triggerText.style.color = 'var(--text-primary)';
+                                wrapper.classList.remove('open');
+                                icon.style.transform = 'rotate(0)';
+
+                                // Update Active State
+                                options.forEach(opt => opt.classList.remove('selected'));
+                                this.classList.add('selected');
+
+                                // Update Native Select (for form submission)
+                                nativeSelect.value = this.dataset.value;
+                            });
+                        });
+
+                        // Close on click outside
+                        document.addEventListener('click', function (e) {
+                            if (!wrapper.contains(e.target)) {
+                                wrapper.classList.remove('open');
+                                icon.style.transform = 'rotate(0)';
+                            }
+                        });
+                    });
+
+                    // File Upload Preview
+                    function updateFileName(input) {
+                        const fileNameDisplay = document.getElementById('fileNameDisplay');
+                        if (input.files && input.files.length > 0) {
+                            fileNameDisplay.textContent = input.files[0].name;
+                            fileNameDisplay.style.color = 'var(--text-primary)';
+                        } else {
+                            fileNameDisplay.textContent = 'Choose Image';
+                            fileNameDisplay.style.color = 'var(--text-secondary)';
+                        }
+                    }
+                </script>
+
+                <div class="form-group">
+                    <label>Thumbnail Application</label>
+                    <!-- Custom File Upload -->
+                    <div class="file-upload-wrapper">
+                        <input type="file" name="thumbnail_file" id="thumbnail_file" accept="image/*"
+                            class="file-upload-input" onchange="updateFileName(this)">
+                        <div class="file-upload-label">
+                            <div class="file-upload-icon">
+                                <span class="iconify" data-icon="heroicons:photo"></span>
+                            </div>
+                            <span id="fileNameDisplay"
+                                style="font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Choose
+                                Image</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center text-muted" style="font-size: 0.8rem; margin: 0.5rem 0;">- OR -</div>
+                    <input type="text" name="thumbnail_url" id="thumbnail_url" class="form-control"
+                        placeholder="https://..." style="font-size: 0.9rem;">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea name="description" id="description" rows="5" class="form-control" required
+                        placeholder="Detailed course description to attract students..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary hover-scale" style="width: 100%; justify-content: center;">
+                    Create Course
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Course List -->
+    <div>
+        <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 500;">Existing Content</h3>
+        {% if courses %}
+        <div class="grid-layout" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+            {% for course in courses %}
+            <div class="glass-card hover-scale"
+                style="padding: 0; overflow: hidden; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="position: relative; height: 180px; overflow: hidden;">
+                    {% if course.thumbnail_url %}
+                    {% if course.thumbnail_url.startswith('http') %}
+                    <img src="{{ course.thumbnail_url }}"
+                        style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;"
+                        onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='uploads/' + course.thumbnail_url) }}"
+                        style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s;"
+                        onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                    {% endif %}
+                    {% else %}
+                    <div
+                        style="width: 100%; height: 100%; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 3rem; font-weight: 800; color: rgba(255,255,255,0.05);">{{
+                            course.title[:2] }}</span>
+                    </div>
+                    {% endif %}
+
+                    <div
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, transparent 0%, rgba(15,23,42,0.9) 100%); pointer-events: none;">
+                    </div>
+
+                    <div style="position: absolute; bottom: 1rem; left: 1rem; z-index: 10;">
+                        <span class="badge badge-primary" style="backdrop-filter: blur(4px);">{{ course.category.name
+                            }}</span>
+                    </div>
+
+                    <button
+                        onclick="openDeleteCourseModal('{{ url_for('admin_bp.delete_course', course_id=course.id) }}', '{{ course.title | replace("'", "\\'") }}')"
+                        class="btn btn-sm btn-danger"
+                        style="position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.1);"
+                        title="Delete">
+                        <span class="iconify" data-icon="heroicons:trash" style="font-size: 1rem;"></span>
+                    </button>
+                </div>
+
+                <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.15rem; line-height: 1.4; color: var(--text-primary);">
+                        {{ course.title }}</h3>
+                    <p class="text-muted"
+                        style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; flex: 1;">
+                        {{ course.description }}
+                    </p>
+
+                    <a href="{{ url_for('admin_bp.course_content', course_id=course.id) }}" class="btn btn-outline"
+                        style="width: 100%; justify-content: center; border-color: rgba(59, 130, 246, 0.5); color: var(--primary);">
+                        <span class="iconify" data-icon="heroicons:pencil-square" style="margin-right: 0.5rem;"></span>
+                        Manage Content
+                    </a>
+                </div>
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <div class="glass-card text-center" style="padding: 4rem;">
+            <div
+                style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                <span class="iconify" data-icon="heroicons:academic-cap"
+                    style="font-size: 2.5rem; color: var(--text-muted);"></span>
+            </div>
+            <p class="text-muted">No courses found. Create your first one!</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Delete Course Modal -->
-<div id="deleteCourseModal"
-    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-    <div class="glass-card" style="width: 500px; max-width: 90%; text-align: center; border: 1px solid var(--danger);">
-        <h3 style="color: var(--danger); margin-top: 0;">Delete Course</h3>
-        <p style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.5rem;">Are you sure you want to delete
-            <strong id="delCourseTitle" style="color: white;"></strong>?
-        </p>
-        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;">This action cannot be undone.
-            All modules, lessons, assignments, and quizzes will be permanently deleted.</p>
+<!-- Delete Modal -->
+<div id="deleteCourseModal" class="modal"
+    style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 1rem;">
+    <div class="glass-card modalPop"
+        style="width: 100%; max-width: 450px; padding: 2rem; border-color: var(--danger); box-shadow: 0 10px 40px rgba(239, 68, 68, 0.1);">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div
+                style="width: 60px; height: 60px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: var(--danger);">
+                <span class="iconify anime-pulse" data-icon="heroicons:exclamation-triangle"
+                    style="font-size: 2rem;"></span>
+            </div>
+            <h3 style="margin: 0 0 0.5rem 0; color: white; font-size: 1.25rem;">Delete Course?</h3>
+            <p class="text-muted">Are you sure you want to delete <strong id="delCourseTitle"
+                    class="text-white"></strong>?</p>
+            <p class="text-sm text-secondary" style="margin-top: 0.5rem;">This action is <strong>irreversible</strong>.
+                All content will be lost.</p>
+        </div>
 
         <form id="deleteCourseForm" method="POST">
-            <div
-                style="margin-bottom: 2rem; text-align: left; background: rgba(220, 38, 38, 0.05); padding: 1.25rem; border-radius: 8px; border: 1px solid rgba(220, 38, 38, 0.15);">
-                <label style="display: flex; gap: 1rem; cursor: pointer; align-items: start; user-select: none;">
-                    <div style="position: relative; width: 22px; height: 22px; flex-shrink: 0; margin-top: 2px;">
-                        <input type="checkbox" id="confirmDeleteCheck" onchange="toggleDeleteBtn()"
-                            style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; z-index: 2;">
-                        <div class="custom-checkbox"
-                            style="width: 100%; height: 100%; border: 2px solid var(--text-secondary); border-radius: 4px; transition: all 0.2s;">
-                        </div>
-                    </div>
-                    <span style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">I
-                        confirm that I
-                        want to delete this course and understand that all associated data will be lost forever.</span>
+            <div class="form-group"
+                style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: var(--radius-sm);">
+                <label style="display: flex; gap: 0.75rem; cursor: pointer; margin: 0; align-items: flex-start;">
+                    <input type="checkbox" id="confirmDeleteCheck" onchange="toggleDeleteBtn()"
+                        style="width: auto; margin-top: 3px;">
+                    <span class="text-sm text-secondary" style="line-height: 1.4;">I understand that this action
+                        involves permanent data loss.</span>
                 </label>
             </div>
-
-            <div style="display: flex; gap: 1rem;">
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                 <button type="button" onclick="document.getElementById('deleteCourseModal').style.display='none'"
-                    class="btn"
-                    style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary);">Cancel</button>
-                <button type="submit" id="deleteCourseBtn" class="btn btn-danger"
-                    style="flex: 1; opacity: 0.5; cursor: not-allowed;" disabled>Confirm Delete</button>
+                    class="btn btn-ghost" style="flex: 1;">Cancel</button>
+                <button type="submit" id="deleteCourseBtn" class="btn btn-danger" style="flex: 1;"
+                    disabled>Delete</button>
             </div>
         </form>
     </div>
@@ -185,26 +267,13 @@
     }
 
     function toggleDeleteBtn() {
-        const btn = document.getElementById('deleteCourseBtn');
-        const check = document.getElementById('confirmDeleteCheck');
-        if (check.checked) {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
-        } else {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
-        }
+        document.getElementById('deleteCourseBtn').disabled = !document.getElementById('confirmDeleteCheck').checked;
     }
 
-    // Close modal on outside click
-    window.onclick = function (event) {
-        const modal = document.getElementById('deleteCourseModal');
-        if (event.target == modal) {
-            modal.style.display = 'none';
+    window.onclick = function (e) {
+        if (e.target == document.getElementById('deleteCourseModal')) {
+            document.getElementById('deleteCourseModal').style.display = 'none';
         }
     }
 </script>
-
 {% endblock %}

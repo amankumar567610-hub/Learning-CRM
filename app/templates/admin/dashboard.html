@@ -1,166 +1,248 @@
 {% extends "base.html" %}
 
-{% block flash_messages %}{% endblock %}
+{% block title %}Admin Dashboard - LMS{% endblock %}
 
 {% block content %}
-<div style="display: flex; min-height: 100vh;">
-    <!-- Sidebar -->
-    <div class="sidebar"
-        style="width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 2rem 1rem; position: fixed; height: 100vh; overflow-y: auto;">
-        <h3 style="margin-bottom: 2rem; padding-left: 1rem; font-size: 1.25rem;">Course Admin</h3>
-        <nav>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-                <li><a href="{{ url_for('main.dashboard') }}" class="sidebar-link active">Dashboard</a></li>
-                <li><a href="{{ url_for('admin_bp.categories') }}" class="sidebar-link">Categories</a></li>
-                <li><a href="{{ url_for('admin_bp.courses') }}" class="sidebar-link">Courses</a></li>
-                <li><a href="{{ url_for('admin_bp.students') }}" class="sidebar-link">Students</a></li>
-                <li style="margin-top: 2rem;">
-                    <a href="{{ url_for('auth.logout') }}" class="sidebar-link" style="color: var(--danger);">Logout</a>
-                </li>
-            </ul>
-        </nav>
+<!-- Hero Banner -->
+<div class="glass-card anime-pulse"
+    style="margin-bottom: 2.5rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%); border: 1px solid rgba(59, 130, 246, 0.3); padding: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end; position: relative; overflow: hidden; min-height: 200px;">
+
+    <div style="position: relative; z-index: 2;">
+        <span class="badge badge-primary" style="margin-bottom: 1rem; backdrop-filter: blur(4px);">Admin Panel</span>
+        <h1 class="page-title gradient-text" style="font-size: 3rem; margin-bottom: 0.5rem; letter-spacing: -1px;">
+            Dashboard</h1>
+        <p class="text-secondary" style="font-size: 1.2rem; color: #cbd5e1; max-width: 500px;">Welcome back, {{
+            user.full_name }}. Here's what's happening in your academy today.</p>
     </div>
 
-    <!-- Main Content -->
-    <div class="content-wrapper">
-        <!-- Flash Messages Area -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div style="margin-bottom: 2rem;">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" role="alert"
-                style="display: flex; align-items: center; gap: 0.5rem;">
-                {{ message }}
-            </div>
-            {% endfor %}
+    <div
+        style="position: relative; z-index: 2; text-align: right; background: rgba(0,0,0,0.3); padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(4px);">
+        <div
+            style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 1px;">
+            Today</div>
+        <div style="font-size: 1.25rem; font-weight: 600; color: white;">{{ now.strftime('%B %d, %Y') if now else '' }}
         </div>
-        {% endif %}
-        {% endwith %}
+    </div>
 
-        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+    <!-- Background Decorative Icon -->
+    <span class="iconify" data-icon="heroicons:presentation-chart-line"
+        style="position: absolute; right: -30px; bottom: -30px; font-size: 280px; color: rgba(59, 130, 246, 0.08); transform: rotate(-10deg); z-index: 1;"></span>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid" style="margin-bottom: 3rem;">
+    <!-- Pending Requests -->
+    <div class="glass-card hover-scale" style="position: relative; overflow: hidden; padding: 2rem;">
+        <div
+            style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2;">
             <div>
-                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Dashboard</h1>
-                <p style="color: var(--text-secondary);">Welcome back, {{ user.full_name }}</p>
-            </div>
-        </header>
-
-        <!-- Notifications -->
-        {% if notifications %}
-        <div style="margin-bottom: 3rem;">
-            <h3 style="margin-bottom: 1rem; font-size: 1.25rem; color: var(--text-primary);">Recent Notifications</h3>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                {% for notif in notifications %}
-                <div class="glass-card" id="notif-{{ notif.id }}"
-                    style="padding: 1rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent);">
-                    <div>
-                        <p style="margin: 0; font-weight: 500; font-size: 0.95rem;">{{ notif.message }}</p>
-                        <small style="color: var(--text-secondary); font-size: 0.8rem;">{{
-                            notif.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                    </div>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        {% if notif.link %}
-                        <a href="{{ notif.link }}" class="btn btn-sm"
-                            style="background: rgba(59, 130, 246, 0.1); color: var(--accent); border: 1px solid var(--accent);">Review</a>
-                        {% endif %}
-                        <button onclick="markAsRead('{{ notif.id }}')"
-                            style="background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.2rem; display: flex; align-items: center; justify-content: center; transition: color 0.2s;"
-                            onmouseover="this.style.color='var(--text-primary)'"
-                            onmouseout="this.style.color='var(--text-secondary)'" title="Mark as Read">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
-                    </div>
+                <div
+                    style="font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">
+                    Pending Approvals</div>
+                <div style="font-size: 3.5rem; font-weight: 800; color: var(--warning); line-height: 1;">
+                    {{ pending_requests }}
                 </div>
-                {% endfor %}
+            </div>
+            <div
+                style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--warning);">
+                <span class="iconify" data-icon="heroicons:clock" style="font-size: 1.5rem;"></span>
             </div>
         </div>
-        {% endif %}
 
+        <div
+            style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 2;">
+            {% if pending_requests > 0 %}
+            <a href="{{ url_for('admin_bp.students') }}"
+                style="font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; color: var(--warning); font-weight: 500;">
+                Review Requests <span class="iconify" data-icon="heroicons:arrow-right"
+                    style="font-size: 0.8rem;"></span>
+            </a>
+            {% else %}
+            <span
+                style="font-size: 0.95rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                <span class="iconify" data-icon="heroicons:check-circle"></span> All caught up
+            </span>
+            {% endif %}
+        </div>
+        <span class="iconify" data-icon="heroicons:user-group"
+            style="position: absolute; right: -20px; top: 20px; font-size: 140px; color: rgba(245, 158, 11, 0.03); z-index: 1; transform: rotate(15deg);"></span>
+    </div>
 
-        <script>
-            function markAsRead(notificationId) {
-                const card = document.getElementById(`notif-${notificationId}`);
-
-                fetch(`/admin/notification/${notificationId}/read`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            // Animate and remove
-                            card.style.transition = 'all 0.3s ease';
-                            card.style.opacity = '0';
-                            card.style.transform = 'translateX(20px)';
-                            setTimeout(() => {
-                                card.remove();
-                                // If no more notifications, hide the header? Not strictly necessary but nice.
-                                const remaining = document.querySelectorAll('.glass-card[id^="notif-"]');
-                                if (remaining.length === 0) {
-                                    // Find the parent container and hide it or reload page
-                                    // Simple reload to clear the "Recent Notifications" header if empty
-                                    // or just leave the header. User asked for notification to be removed.
-                                }
-                            }, 300);
-                        }
-                    })
-                    .catch(err => console.error('Error marking read:', err));
-            }
-        </script>
-
-
-        <!-- Stats Grid -->
-        <div class="grid-layout">
-            <!-- Pending Requests -->
-            <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div
-                        style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
-                        Pending Approvals</div>
-                    {% if pending_requests > 0 %}
-                    <span
-                        style="background: var(--warning); width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 8px var(--warning);"></span>
-                    {% endif %}
-                </div>
+    <!-- Active Students -->
+    <div class="glass-card hover-scale" style="position: relative; overflow: hidden; padding: 2rem;">
+        <div
+            style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2;">
+            <div>
                 <div
-                    style="font-size: 3rem; font-weight: 800; color: var(--warning); margin: 0.5rem 0; line-height: 1;">
-                    {{ pending_requests }}</div>
-                {% if pending_requests > 0 %}
-                <a href="{{ url_for('admin_bp.students') }}" style="font-size: 0.9rem; font-weight: 500;">Review
-                    Requests &rarr;</a>
-                {% else %}
-                <span style="font-size: 0.9rem; color: var(--text-muted);">All caught up</span>
-                {% endif %}
-            </div>
-
-            <!-- Active Students -->
-            <div class="glass-card">
-                <div
-                    style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                    style="font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">
                     Active Students</div>
-                <div
-                    style="font-size: 3rem; font-weight: 800; color: var(--success); margin: 0.5rem 0; line-height: 1;">
-                    {{ active_students }}</div>
-                <span style="font-size: 0.9rem; color: var(--text-secondary);">Total: {{ total_students }}</span>
+                <div style="font-size: 3.5rem; font-weight: 800; color: var(--success); line-height: 1;">
+                    {{ active_students }}
+                </div>
             </div>
-
-            <!-- Total Courses -->
-            <div class="glass-card">
-                <div
-                    style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
-                    Courses</div>
-                <div
-                    style="font-size: 3rem; font-weight: 800; color: var(--text-primary); margin: 0.5rem 0; line-height: 1;">
-                    {{ total_courses }}</div>
-                <a href="{{ url_for('admin_bp.courses') }}" style="font-size: 0.9rem; font-weight: 500;">Manage Content
-                    &rarr;</a>
+            <div
+                style="width: 48px; height: 48px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--success);">
+                <span class="iconify" data-icon="heroicons:academic-cap" style="font-size: 1.5rem;"></span>
             </div>
         </div>
+
+        <div
+            style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.95rem; position: relative; z-index: 2;">
+            Total Registered: <span style="color: white; font-weight: 500;">{{ total_students }}</span>
+        </div>
+        <span class="iconify" data-icon="heroicons:users"
+            style="position: absolute; right: -20px; top: 20px; font-size: 140px; color: rgba(16, 185, 129, 0.03); z-index: 1; transform: rotate(15deg);"></span>
+    </div>
+
+    <!-- Total Courses -->
+    <div class="glass-card hover-scale" style="position: relative; overflow: hidden; padding: 2rem;">
+        <div
+            style="display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 2;">
+            <div>
+                <div
+                    style="font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">
+                    Courses</div>
+                <div style="font-size: 3.5rem; font-weight: 800; color: var(--primary); line-height: 1;">
+                    {{ total_courses }}
+                </div>
+            </div>
+            <div
+                style="width: 48px; height: 48px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                <span class="iconify" data-icon="heroicons:book-open" style="font-size: 1.5rem;"></span>
+            </div>
+        </div>
+
+        <div
+            style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 2;">
+            <a href="{{ url_for('admin_bp.courses') }}"
+                style="font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; color: var(--primary); font-weight: 500;">
+                Manage Content <span class="iconify" data-icon="heroicons:arrow-right"
+                    style="font-size: 0.8rem;"></span>
+            </a>
+        </div>
+        <span class="iconify" data-icon="heroicons:video-camera"
+            style="position: absolute; right: -20px; top: 20px; font-size: 140px; color: rgba(59, 130, 246, 0.03); z-index: 1; transform: rotate(15deg);"></span>
     </div>
 </div>
+
+<!-- Quick Actions -->
+<div style="margin-bottom: 3rem;">
+    <h3
+        style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-primary); font-weight: 600; display: flex; align-items: center; gap: 0.75rem;">
+        <span class="iconify" data-icon="heroicons:bolt" style="color: var(--warning);"></span> Quick Actions
+    </h3>
+    <div class="stats-grid" style="gap: 1.5rem;">
+        <a href="{{ url_for('admin_bp.courses') }}" class="glass-card hover-scale"
+            style="padding: 1.75rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; text-decoration: none; border: 1px solid rgba(59, 130, 246, 0.2); transition: all 0.3s; background: rgba(59, 130, 246, 0.03);">
+            <div
+                style="width: 64px; height: 64px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.2) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.1);">
+                <span class="iconify" data-icon="heroicons:plus" style="font-size: 2rem;"></span>
+            </div>
+            <div>
+                <h4 style="margin: 0; color: var(--text-primary); font-size: 1.2rem; font-weight: 600;">New Course</h4>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0.5rem 0 0 0;">Add video content &
+                    lessons</p>
+            </div>
+            <div
+                style="margin-top: auto; padding-top: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--primary); font-size: 0.9rem; font-weight: 500;">
+                Create Now <span class="iconify" data-icon="heroicons:arrow-right"></span>
+            </div>
+        </a>
+
+        <a href="{{ url_for('admin_bp.students') }}" class="glass-card hover-scale"
+            style="padding: 1.75rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; text-decoration: none; border: 1px solid rgba(16, 185, 129, 0.2); transition: all 0.3s; background: rgba(16, 185, 129, 0.03);">
+            <div
+                style="width: 64px; height: 64px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.2) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--success); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.1);">
+                <span class="iconify" data-icon="heroicons:user-plus" style="font-size: 2rem;"></span>
+            </div>
+            <div>
+                <h4 style="margin: 0; color: var(--text-primary); font-size: 1.2rem; font-weight: 600;">Add Student</h4>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0.5rem 0 0 0;">Register and enroll
+                    users</p>
+            </div>
+            <div
+                style="margin-top: auto; padding-top: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--success); font-size: 0.9rem; font-weight: 500;">
+                Register <span class="iconify" data-icon="heroicons:arrow-right"></span>
+            </div>
+        </a>
+
+        <a href="{{ url_for('admin_bp.categories') }}" class="glass-card hover-scale"
+            style="padding: 1.75rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; text-decoration: none; border: 1px solid rgba(245, 158, 11, 0.2); transition: all 0.3s; background: rgba(245, 158, 11, 0.03);">
+            <div
+                style="width: 64px; height: 64px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.2) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--warning); box-shadow: 0 4px 10px rgba(245, 158, 11, 0.1);">
+                <span class="iconify" data-icon="heroicons:folder-plus" style="font-size: 2rem;"></span>
+            </div>
+            <div>
+                <h4 style="margin: 0; color: var(--text-primary); font-size: 1.2rem; font-weight: 600;">Categories</h4>
+                <p style="font-size: 0.95rem; color: var(--text-secondary); margin: 0.5rem 0 0 0;">Organize course
+                    materials</p>
+            </div>
+            <div
+                style="margin-top: auto; padding-top: 1rem; display: flex; align-items: center; gap: 0.5rem; color: var(--warning); font-size: 0.9rem; font-weight: 500;">
+                Manage <span class="iconify" data-icon="heroicons:arrow-right"></span>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Notifications -->
+{% if notifications %}
+<div class="glass-card" style="padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+    <div
+        style="padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); display: flex; align-items: center; gap: 0.75rem;">
+        <span class="iconify" data-icon="heroicons:bell" style="color: var(--primary); font-size: 1.25rem;"></span>
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">Activity & Notifications</h3>
+    </div>
+    <div style="display: flex; flex-direction: column;">
+        {% for notif in notifications %}
+        <div class="notification-item" id="notif-{{ notif.id }}"
+            style="padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: flex-start; transition: background 0.2s;">
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                <div style="width: 8px; height: 8px; background: var(--primary); border-radius: 50%; margin-top: 6px;">
+                </div>
+                <div>
+                    <p style="margin: 0 0 0.25rem 0; font-size: 1rem; color: var(--text-primary);">{{ notif.message }}
+                    </p>
+                    <small class="text-muted"
+                        style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                        {{ notif.created_at.strftime('%B %d, %H:%M') }}
+                    </small>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                {% if notif.link %}
+                <a href="{{ notif.link }}" class="btn btn-sm"
+                    style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-light); color: var(--text-primary); font-size: 0.85rem;">Review</a>
+                {% endif %}
+                <button onclick="markAsRead('{{ notif.id }}')"
+                    style="background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 0.5rem; border-radius: 50%; transition: all 0.2s;"
+                    title="Dismiss"
+                    onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='var(--text-primary)'"
+                    onmouseout="this.style.background='none'; this.style.color='var(--text-secondary)'">
+                    <span class="iconify" data-icon="heroicons:x-mark" style="font-size: 1.25rem;"></span>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function markAsRead(notificationId) {
+        const item = document.getElementById(`notif-${notificationId}`);
+        fetch(`/admin/notification/${notificationId}/read`, { method: 'POST' })
+            .then(res => {
+                if (res.ok) {
+                    item.style.transition = 'all 0.4s ease';
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(-10px)';
+                    item.style.height = '0';
+                    item.style.padding = '0';
+                    item.style.border = 'none';
+                    setTimeout(() => item.remove(), 400);
+                }
+            });
+    }
+</script>
+{% endif %}
 {% endblock %}
